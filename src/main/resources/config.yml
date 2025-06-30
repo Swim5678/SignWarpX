@@ -1,140 +1,145 @@
-# 使用傳送點時需要的物品（設為 none 代表不需要）
-use-item: ENDER_PEARL
-# 使用傳送點時消耗的物品數量
-use-cost: 1
-# 傳送前的等待時間（單位：秒）
-teleport-delay: 5
-# 設置傳送完成後的冷卻（單位：秒）
-teleport-use-cooldown: 10
-# 牽引相關設定
-enable-recursive-leash: true  # 是否啟用遞迴牽引功能
-max-leash-depth: 5           # 最大牽引深度（防止過長的牽引鏈）
+# Multi-language configuration note
+# All language config files are stored in the languages folder.
+# To switch language, copy your desired config file from the languages folder to the main plugin directory and rename it to config.yml (overwrite the original file).
+# For example: copy languages/config-zh_tw.yml to config.yml to switch to Traditional Chinese.
 
-# 跨次元傳送設定
+# Item required when using a warp point (set to none if not required)
+use-item: ENDER_PEARL
+# Number of items consumed when using a warp point
+use-cost: 1
+# Waiting time before teleportation (unit: seconds)
+teleport-delay: 5
+# Cooldown after teleportation is completed (unit: seconds)
+teleport-use-cooldown: 10
+# Leash related settings
+enable-recursive-leash: true  # Enable recursive leash function
+max-leash-depth: 5           # Maximum leash depth (to prevent excessively long leash chains)
+
+# Cross-dimension teleport settings
 cross-dimension-teleport:
-  # 是否允許跨次元傳送 (true 允許, false 禁止)
+  # Allow cross-dimension teleportation (true allows, false disables)
   enabled: true
-  # OP 是否可以無視跨次元限制 (true 允許, false 禁止)
+  # Allow OPs to bypass cross-dimension restrictions (true allows, false disables)
   op-bypass: true
-# 群組功能相關設定
+# Group function related settings
 warp-groups:
-  # 是否啟用群組功能 (true 啟用, false 停用)
+  # Enable group function (true enables, false disables)
   enabled: true
-  # 每位玩家最多可建立的群組數量 (OP 不受此限制)
+  # Maximum number of groups each player can create (OPs are not limited)
   max-groups-per-player: 5
-  # 每個群組最多可包含的傳送點數量 (OP 不受此限制)
+  # Maximum number of warps per group (OPs are not limited)
   max-warps-per-group: 10
-  # 每個群組最多可邀請的成員數量 (OP 不受此限制)
+  # Maximum number of members per group (OPs are not limited)
   max-members-per-group: 20
-  # 是否允許普通玩家使用群組功能 (true 允許, false 僅限 OP)
+  # Allow normal players to use group functions (true allows, false only for OP)
   allow-normal-players: true
 
 
 ###############################################################################
-# 以下設定只影響建立 Warp Target (WPT) 標誌
+# The following settings affect only the creation of Warp Target (WPT) signs
 ###############################################################################
-# 建立 Warp Target 標誌所需的物品（設為 none 代表不需要）
+# Item required to create Warp Target sign (set to none if not required)
 create-wpt-item: DIAMOND_SWORD
-# 建立 Warp Target 標誌時消耗的物品數量
+# Number of items consumed when creating Warp Target sign
 create-wpt-item-cost: 1
-# 每位玩家最多可創建的傳送點數量（-1 表示無限制）
+# Maximum number of warp points each player can create (-1 means unlimited)
 max-warps-per-player: 10
-# OP 是否不受創建數量限制（true 表示 OP 無限制）
+# OPs are not limited in the number of warps they can create (true means unlimited for OP)
 op-unlimited-warps: true
-# 預設的傳送點可見性（true 為私人，false 為公共）
+# Default visibility of warp points (true for private, false for public)
 default-visibility: false
-# 是否在 WPT 告示牌上顯示建立者資訊（true 表示顯示，false 表示不顯示）
+# Display creator info on the WPT sign (true displays, false does not display)
 show-creator-on-sign: true
 
 ###############################################################################
-# 自訂訊息
+# Custom Messages
 ###############################################################################
 messages:
-  create_permission: "<red>您沒有權限建立傳送點！"
-  no_warp_name: "<red>未設定傳送名稱！\n請在第二行設定傳送名稱。"
-  warp_created: "<green>傳送點已成功建立。"
-  warp_name_taken: "<red>已有相同名稱的傳送目標！"
-  warp_destroyed: "<green>傳送目標已被摧毀。"
-  target_sign_created: "<green>傳送點已成功建立。"
-  destroy_permission: "<red>您沒有權限摧毀傳送點！"
-  invalid_item: "<red>您必須使用 {use-item} 來啟用此傳送！"
-  not_enough_item: "<red>您沒有足夠的 {use-item} x{use-cost} 來建立此傳送點。"
-  warp_not_found: "<red>指定的傳送目標不存在！"
-  use_permission: "<red>您沒有權限使用此傳送點！"
-  teleport: "<yellow>正在傳送到 {warp-name}，{time} 秒後到達..."
-  teleport-success: "<green>成功傳送到 {warp-name}。"
-  teleport-cancelled: "<red>傳送已取消。"
-  not_permission: "<red>您沒有權限！"
-  cooldown: "<red>您必須等待 {cooldown} 秒才能再次傳送。"
-  warp_visibility_changed: "<green>傳送點 {warp-name} 的使用權限已更改為{visibility}。"
-  cant_modify_others_warp: "<red>您只能更改自己創建的傳送點！"
-  set_visibility_usage: "<red>用法: /wp set <公共|私人> <傳送點名稱>"
-  invalid_visibility: "<red>使用權限必須是 '公共' 或 '私人'"
-  private_warp: "<red>權限不足。"
-  invite_success: "<green>已成功邀請 {player} 使用傳送點 '{warp-name}'！"
-  invite_received: "<green>{inviter} 邀請你使用傳送點 '{warp-name}'！"
-  invite_failed: "<red>無法邀請玩家使用此傳送點！"
-  uninvite_success: "<green>已移除 {player} 使用傳送點 '{warp-name}' 的權限。"
-  player_not_found: "<red>找不到玩家 '{player}' 或該玩家離線！"
-  not_your_warp: "<red>你只能邀請玩家使用你自己的傳送點！"
-  invite_usage: "<red>用法: /wp invite <玩家> <傳送點名稱>"
-  uninvite_usage: "<red>用法: /wp uninvite <玩家> <傳送點名稱>"
-  already_invited: "<red>玩家 {player} 已經被邀請使用此傳送點！"
-  not_invited: "<red>玩家 {player} 未被邀請使用此傳送點。"
-  invite_list: "<green>傳送點 '{warp-name}' 的邀請列表:"
-  no_invites: "<yellow>此傳送點尚未邀請任何玩家。"
-  cant_modify_warp: "<red>您無法修改此傳送點的邀請名單！"
-  warp_limit_reached: "<red>您已達到最大傳送點創建數量限制 ({current}/{max})！"
-  warp_count_info: "<green>您目前已創建 {current} 個傳送點，限制為 {max} 個。"
-  unlimited_warps: "<green>您擁有無限制的傳送點創建權限。"
-  my_warps_header: "<green>=== {player}擁有的傳送點 ==="
-  no_warps_owned: "<gray>{player}目前沒有擁有任何傳送點。"
+  create_permission: "<red>You don't have permission to create a warp!"
+  no_warp_name: "<red>Warp name not set!\nPlease set the warp name on the second line."
+  warp_created: "<green>Warp point created successfully."
+  warp_name_taken: "<red>A warp target with the same name already exists!"
+  warp_destroyed: "<green>The warp target has been destroyed."
+  target_sign_created: "<green>Warp point created successfully."
+  destroy_permission: "<red>You don't have permission to destroy the warp point!"
+  invalid_item: "<red>You must use {use-item} to activate this warp!"
+  not_enough_item: "<red>You do not have enough {use-item} x{use-cost} to create this warp."
+  warp_not_found: "<red>The specified warp target does not exist!"
+  use_permission: "<red>You don't have permission to use this warp!"
+  teleport: "<yellow>Teleporting to {warp-name}, arriving in {time} seconds..."
+  teleport-success: "<green>Successfully teleported to {warp-name}."
+  teleport-cancelled: "<red>Teleportation cancelled."
+  not_permission: "<red>You don't have permission!"
+  cooldown: "<red>You must wait {cooldown} seconds before teleporting again."
+  warp_visibility_changed: "<green>Permission for warp point {warp-name} has been changed to {visibility}."
+  cant_modify_others_warp: "<red>You can only modify warps you created!"
+  set_visibility_usage: "<red>Usage: /wp set <public|private> <warp name>"
+  invalid_visibility: "<red>Permission must be 'public' or 'private'"
+  private_warp: "<red>Insufficient permissions."
+  invite_success: "<green>Successfully invited {player} to use warp '{warp-name}'!"
+  invite_received: "<green>{inviter} invited you to use warp '{warp-name}'!"
+  invite_failed: "<red>Unable to invite player to use this warp!"
+  uninvite_success: "<green>Removed {player}'s permission to use warp '{warp-name}'."
+  player_not_found: "<red>Player '{player}' not found or offline!"
+  not_your_warp: "<red>You can only invite players to your own warps!"
+  invite_usage: "<red>Usage: /wp invite <player> <warp name>"
+  uninvite_usage: "<red>Usage: /wp uninvite <player> <warp name>"
+  already_invited: "<red>Player {player} has already been invited to this warp!"
+  not_invited: "<red>Player {player} is not invited to this warp."
+  invite_list: "<green>Invite list for warp '{warp-name}':"
+  no_invites: "<yellow>No players have been invited to this warp yet."
+  cant_modify_warp: "<red>You cannot modify the invite list of this warp!"
+  warp_limit_reached: "<red>You have reached the maximum number of warp points ({current}/{max})!"
+  warp_count_info: "<green>You currently have {current} warp(s), limit is {max}."
+  unlimited_warps: "<green>You have unlimited warp creation permissions."
+  my_warps_header: "<green>=== Warps owned by {player} ==="
+  no_warps_owned: "<gray>{player} does not own any warps at the moment."
   warp_list_format: "<white>{index}. <aqua>{warp-name} <gray>({visibility}) - <yellow>{world} <gray>({x}, {y}, {z})"
-  total_warps: "<green>{player}總共擁有 {count} 個傳送點"
-  not_permission_view_others: "<red>您沒有權限查看其他玩家的傳送點！"
-  player_not_found_or_no_warps: "<red>找不到玩家 '{player}' 或該玩家沒有任何傳送點。"
-  creator-display-format: "<gray>建立者: <white>{creator}"
-  cross_dimension_disabled: "<red>跨次元傳送已被禁用！您無法傳送到位於 <yellow>{target-world} <red>世界的傳送點。"
-  warp_world_not_found: "<red>傳送點所在的世界不存在或未載入！請聯絡管理員。"
-  player_not_online: "<red>玩家 '{player}' 目前不在線上！請等待玩家上線後再進行操作。"
-  cannot_teleport_on_boat: "<red>玩家在船上無法進行傳送！</red>"
-  leash_depth_warning: "<yellow>⚠ 警告：您的牽引鏈已達到最大深度限制 {max-depth} 層！部分深層實體無法一起傳送"
+  total_warps: "<green>{player} owns a total of {count} warps"
+  not_permission_view_others: "<red>You don't have permission to view other players' warps!"
+  player_not_found_or_no_warps: "<red>Player '{player}' not found or has no warps."
+  creator-display-format: "<gray>Creator: <white>{creator}"
+  cross_dimension_disabled: "<red>Cross-dimension teleportation is disabled! You cannot teleport to a warp in world <yellow>{target-world}<red>."
+  warp_world_not_found: "<red>The world where the warp is located does not exist or is not loaded! Please contact an administrator."
+  player_not_online: "<red>Player '{player}' is currently offline! Please try again when the player is online."
+  cannot_teleport_on_boat: "<red>Cannot teleport while on a boat!</red>"
+  leash_depth_warning: "<yellow>⚠ Warning: Your leash chain has reached the maximum depth of {max-depth}! Entities too deep cannot be teleported together"
 
-  # 群組功能相關訊息
-  group_created: "<green>成功建立群組 '{group-name}'！"
-  group_deleted: "<green>群組 '{group-name}' 已刪除。"
-  warp_added_to_group: "<green>傳送點 '{warp-name}' 已加入群組 '{group-name}'。"
-  warp_removed_from_group: "<green>傳送點 '{warp-name}' 已從群組 '{group-name}' 中移除。"
-  player_invited_to_group: "<green>玩家 '{player}' 已被邀請加入群組 '{group-name}'。"
-  player_removed_from_group: "<green>玩家 '{player}' 已從群組 '{group-name}' 中移除。"
-  group_not_found: "<red>找不到群組 '{group-name}'。"
-  not_group_owner: "<red>您沒有權限管理此群組！"
-  warp_not_private: "<red>只有私人傳送點才能加入群組！"
-  warp_already_in_group: "<red>傳送點 '{warp-name}' 已經在群組 '{existing-group}' 中。"
-  max_groups_reached: "<red>您已達到群組建立上限（{max}）！"
-  no_permission_use_warp: "<red>您沒有權限使用此傳送點！"
-  teleport_success: "<green>成功傳送到 '{warp-name}'！"
-  teleport_failed: "<red>傳送失敗，請稍後再試。"
+  # Group function messages
+  group_created: "<green>Group '{group-name}' created successfully!"
+  group_deleted: "<green>Group '{group-name}' has been deleted."
+  warp_added_to_group: "<green>Warp '{warp-name}' added to group '{group-name}'."
+  warp_removed_from_group: "<green>Warp '{warp-name}' removed from group '{group-name}'."
+  player_invited_to_group: "<green>Player '{player}' has been invited to join group '{group-name}'."
+  player_removed_from_group: "<green>Player '{player}' has been removed from group '{group-name}'."
+  group_not_found: "<red>Group '{group-name}' not found."
+  not_group_owner: "<red>You don't have permission to manage this group!"
+  warp_not_private: "<red>Only private warps can be added to a group!"
+  warp_already_in_group: "<red>Warp '{warp-name}' is already in group '{existing-group}'."
+  max_groups_reached: "<red>You have reached the group creation limit ({max})!"
+  no_permission_use_warp: "<red>You don't have permission to use this warp!"
+  teleport_success: "<green>Successfully teleported to '{warp-name}'!"
+  teleport_failed: "<red>Teleportation failed, please try again later."
 
-  # 群組功能停用相關訊息
-  group_feature_disabled: "<red>群組功能目前已停用！"
-  group_feature_no_permission: "<red>您沒有權限使用群組功能！"
-  group_feature_admin_only: "<red>群組功能僅限管理員使用！"
-  group_warps_limit_reached: "<red>群組傳送點數量已達上限（{max}）！"
-  group_members_limit_reached: "<red>群組成員數量已達上限（{max}）！"
+  # Group feature disabled messages
+  group_feature_disabled: "<red>Group features are currently disabled!"
+  group_feature_no_permission: "<red>You don't have permission to use group features!"
+  group_feature_admin_only: "<red>Group features are admin only!"
+  group_warps_limit_reached: "<red>The group has reached the maximum number of warps ({max})!"
+  group_members_limit_reached: "<red>The group has reached the maximum number of members ({max})!"
 
-  # 群組說明指令訊息
-  group_help_header: "<green>=== SignWarp 群組指令說明 ==="
-  group_help_create: "<aqua>/wp group create <群組名稱> <gray>- 建立新群組"
-  group_help_list: "<aqua>/wp group list <gray>- 查看您的群組列表"
-  group_help_info: "<aqua>/wp group info <群組名稱> <gray>- 查看群組詳細資訊"
-  group_help_add: "<aqua>/wp group add <群組名稱> <傳送點> <gray>- 將傳送點加入群組"
-  group_help_remove: "<aqua>/wp group remove <群組名稱> <傳送點> <gray>- 從群組移除傳送點"
-  group_help_invite: "<aqua>/wp group invite <群組名稱> <玩家> <gray>- 邀請玩家加入群組"
-  group_help_uninvite: "<aqua>/wp group uninvite <群組名稱> <玩家> <gray>- 移除群組成員"
-  group_help_delete: "<aqua>/wp group delete <群組名稱> <gray>- 刪除群組"
+  # Group command help messages
+  group_help_header: "<green>=== SignWarp Group Command Help ==="
+  group_help_create: "<aqua>/wp group create <group name> <gray>- Create a new group"
+  group_help_list: "<aqua>/wp group list <gray>- View your group list"
+  group_help_info: "<aqua>/wp group info <group name> <gray>- View group details"
+  group_help_add: "<aqua>/wp group add <group name> <warp> <gray>- Add a warp to the group"
+  group_help_remove: "<aqua>/wp group remove <group name> <warp> <gray>- Remove a warp from the group"
+  group_help_invite: "<aqua>/wp group invite <group name> <player> <gray>- Invite a player to join the group"
+  group_help_uninvite: "<aqua>/wp group uninvite <group name> <player> <gray>- Remove a group member"
+  group_help_delete: "<aqua>/wp group delete <group name> <gray>- Delete a group"
 
-  # TP 指令相關訊息
-  tp_op_only: "<red>權限不足"
-  tp_usage: "<yellow>用法: /signwarp tp <傳送點名稱>"
-  tp_success: "<green>已傳送到: {warp-name} (建立者: {creator})"
+  # TP command related messages
+  tp_op_only: "<red>Insufficient permissions"
+  tp_usage: "<yellow>Usage: /signwarp tp <warp name>"
+  tp_success: "<green>Teleported to: {warp-name} (Creator: {creator})"
