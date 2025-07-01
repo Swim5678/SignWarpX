@@ -47,18 +47,18 @@ public final class SignWarp extends JavaPlugin implements Listener {
         }
 
         // 複製語言檔案（如果不存在的話）
-        File zhTwConfig = new File(languagesDir, "config-zh_TW.yml");
+        File zhTwConfig = new File(languagesDir, "config-zh_tw.yml");
         if (!zhTwConfig.exists()) {
             try {
-                saveResource("languages/config-zh_TW.yml", false);
+                saveResource("languages/config-zh_tw.yml", false);
             } catch (Exception e) {
                 getLogger().warning("Failed to copy the language file: " + e.getMessage());
             }
         }
-        File enUSConfig = new File(languagesDir, "config-en_US.yml");
+        File enUSConfig = new File(languagesDir, "config-en_us.yml");
         if (!enUSConfig.exists()) {
             try {
-                saveResource("languages/config-en_US.yml", false);
+                saveResource("languages/config-en_us.yml", false);
             } catch (Exception e) {
                 getLogger().warning("Failed to copy the language file: " + e.getMessage());
             }

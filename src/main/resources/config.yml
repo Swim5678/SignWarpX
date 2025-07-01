@@ -1,7 +1,7 @@
 # Multi-language configuration note
 # All language config files are stored in the languages folder.
 # To switch language, copy your desired config file from the languages folder to the main plugin directory and rename it to config.yml (overwrite the original file).
-# For example: copy languages/config-zh_TW.yml to config.yml to switch to Traditional Chinese.
+# For example: copy languages/config-zh_tw.yml to config.yml to switch to Traditional Chinese.
 
 # Item required when using a warp point (set to none if not required)
 use-item: ENDER_PEARL
