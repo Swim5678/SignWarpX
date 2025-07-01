@@ -1,8 +1,12 @@
 package com.swim.signwarp;
 
 import com.swim.signwarp.gui.WarpGuiListener;
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -34,6 +38,15 @@ public final class SignWarp extends JavaPlugin implements Listener {
         pluginManager.registerEvents(this, this);
 
     }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+
+        // 延遲 1 秒發送歡迎訊息，確保玩家完全載入
+        Bukkit.getScheduler().runTaskLater(this, () -> player.sendMessage("§a歡迎使用Swim的§bSignWarpX"), 20L); // 20 ticks = 1 秒
+    }
+
     private void setupLanguageFiles() {
         File languagesDir = new File(getDataFolder(), "languages");
 
@@ -70,7 +83,8 @@ public final class SignWarp extends JavaPlugin implements Listener {
         // if (!enConfig.exists()) {
         //     saveResource("languages/config-en.yml", false);
         // }
-        }
+    }
+
     @Override
     public void onDisable() {
     }
