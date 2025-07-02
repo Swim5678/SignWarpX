@@ -42,8 +42,6 @@ public final class SignWarp extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-
-        // 延遲 1 秒發送歡迎訊息，確保玩家完全載入
         Bukkit.getScheduler().runTaskLater(this, () -> player.sendMessage("§a歡迎使用Swim的§bSignWarpX"), 20L); // 20 ticks = 1 秒
     }
 
