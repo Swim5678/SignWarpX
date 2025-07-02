@@ -523,11 +523,23 @@ public class EventListener implements Listener {
             return;
         }
 
-        // 檢查船隻限制
-        if (player.getVehicle() instanceof Boat) {
-            sendConfigMessage(player, "messages.cannot_teleport_on_boat");
+        // 強化船隻安全檢查 - 確保不會傳送其他玩家
+        if (player.getVehicle() instanceof Boat boat) {
+            boolean hasOtherPlayers = boat.getPassengers().stream()
+                    .anyMatch(passenger -> passenger instanceof Player && !passenger.equals(player));
+            if (hasOtherPlayers) {
+                sendConfigMessage(player, "messages.cannot_teleport_on_boat");
+                return;
+            }
+        }
+        // 檢查附近船隻是否有其他玩家
+        Boat nearbyBoatWithOtherPlayers = findBoatWithOtherPlayers(player);
+        if (nearbyBoatWithOtherPlayers != null) {
+            sendConfigMessage(player, "messages.cannot_teleport_boat_has_other_players",
+                    Map.of("{reason}", "附近船隻上有其他玩家"));
             return;
         }
+
 
         // 檢查並扣除使用物品
         String useItem = config.getString("use-item", "none");
@@ -540,32 +552,58 @@ public class EventListener implements Listener {
 
             if (handItem == null || handItem.getType() != requiredMaterial) {
                 Map<String, String> placeholders = Map.of("{use-item}", useItem);
-                sendConfigMessage(player, "messages.invalid_item", placeholders);
+                sendConfigMessage(player, "messages.no_use_item", placeholders);
                 return;
             }
 
-            int useCost = config.getInt("use-cost", 0);
-            if (handItem.getAmount() < useCost) {
-                Map<String, String> placeholders = Map.of(
-                        "{use-cost}", String.valueOf(useCost),
-                        "{use-item}", useItem
-                );
-                sendConfigMessage(player, "messages.not_enough_item", placeholders);
+            // 檢查物品數量並扣除
+            if (!checkAndConsumeItem(player)) {
                 return;
             }
-
-            // 扣除物品
-            int remaining = handItem.getAmount() - useCost;
-            if (remaining <= 0) {
-                player.getInventory().setItemInMainHand(null);
-            } else {
-                handItem.setAmount(remaining);
-                player.getInventory().setItemInMainHand(handItem);
-            }
-            pendingItemCosts.put(playerId, useCost);
         }
 
+        // 檢查並處理冷卻
+        if (!config.getBoolean("enable-cross-dimension-teleport", true)) {
+            if (warp != null && !canCrossDimensionTeleport(player, warp)) {
+                returnPendingItems(player);
+                return;
+            }
+        }
+
+        // 執行傳送
         teleportPlayer(player, warpName);
+    }
+    private Boat findBoatWithOtherPlayers(Player player) {
+        Location playerLoc = player.getLocation();
+
+        for (Entity entity : player.getWorld().getNearbyEntities(playerLoc, 10, 10, 10)) {
+            if (entity instanceof Boat boat) {
+                // 檢查船上是否有除了當前玩家以外的其他玩家
+                boolean hasOtherPlayers = boat.getPassengers().stream()
+                        .anyMatch(passenger -> passenger instanceof Player && !passenger.equals(player));
+
+                if (hasOtherPlayers) {
+                    // 檢查這艘船是否會被傳送（被牽引或玩家在船上）
+                    boolean willBeTeleported = boat.getPassengers().contains(player);
+
+                    // 檢查玩家是否在船上
+
+                    // 檢查船是否被玩家牽引鏈中的實體牽引
+                    if (!willBeTeleported && boat.isLeashed()) {
+                        Entity leashHolder = boat.getLeashHolder();
+                        if (leashHolder != null && isEntityInPlayerLeashChain(player, leashHolder)) {
+                            willBeTeleported = true;
+                        }
+                    }
+
+                    // 如果這艘船會被傳送且上面有其他玩家，則阻止傳送
+                    if (willBeTeleported) {
+                        return boat;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void teleportPlayer(Player player, String warpName) {
@@ -662,37 +700,43 @@ public class EventListener implements Listener {
     private void collectLeashedEntitiesRecursive(Entity holder, Set<Entity> collectedEntities,
                                                  Set<Entity> visited, int currentDepth, int maxDepth,
                                                  AtomicInteger maxReachedDepth) {
-        // 更新實際達到的最大深度
+        if (currentDepth >= maxDepth || visited.contains(holder)) {
+            return;
+        }
+
+        visited.add(holder);
         maxReachedDepth.set(Math.max(maxReachedDepth.get(), currentDepth));
 
-        // 檢查深度限制
-        if (currentDepth >= maxDepth) {
-            return;
-        }
-
-        // 防止重複處理同一個實體
-        if (visited.contains(holder)) {
-            return;
-        }
-        visited.add(holder);
-
-        // 搜尋範圍內所有被此實體牽引的生物
+        // 收集附近所有被牽引的實體
         for (Entity entity : holder.getNearbyEntities(14, 14, 14)) {
             if (entity instanceof LivingEntity livingEntity) {
-                // 檢查是否被當前holder牽引
-                if (livingEntity.isLeashed() && livingEntity.getLeashHolder().equals(holder)) {
-                    // 避免重複添加
+                if (livingEntity.isLeashed() && livingEntity.getLeashHolder() != null &&
+                        livingEntity.getLeashHolder().equals(holder)) {
+
                     if (!collectedEntities.contains(livingEntity)) {
                         collectedEntities.add(livingEntity);
-
-                        // 遞迴檢查這個被牽引的實體是否也在牽引其他實體
+                        // 遞迴收集這個實體牽引的其他實體
                         collectLeashedEntitiesRecursive(livingEntity, collectedEntities, visited,
                                 currentDepth + 1, maxDepth, maxReachedDepth);
                     }
                 }
             }
+            else if (entity instanceof Boat boat) {
+                if (boat.isLeashed() && boat.getLeashHolder() != null &&
+                        boat.getLeashHolder().equals(holder)) {
+
+                    if (!collectedEntities.contains(boat)) {
+                        collectedEntities.add(boat);
+                        // 收集船上的所有非玩家實體
+                        boat.getPassengers().stream()
+                                .filter(passenger -> !(passenger instanceof Player))
+                                .forEach(collectedEntities::add);
+                    }
+                }
+            }
         }
     }
+
 
     /**
      * 發送牽引深度警告訊息給玩家
@@ -743,12 +787,44 @@ public class EventListener implements Listener {
         double minDistance = Double.MAX_VALUE;
         Location playerLoc = player.getLocation();
 
-        for (Entity entity : player.getWorld().getNearbyEntities(playerLoc, 5, 5, 5)) {
+        for (Entity entity : player.getWorld().getNearbyEntities(playerLoc, 10, 10, 10)) {
             if (entity instanceof Boat boat) {
+                boolean shouldTeleport = false;
+
+                // 安全檢查：確保船上沒有其他玩家
+                boolean hasOtherPlayers = boat.getPassengers().stream()
+                        .anyMatch(passenger -> passenger instanceof Player && !passenger.equals(player));
+
+                if (hasOtherPlayers) {
+                    // 船上有其他玩家，跳過這艘船
+                    continue;
+                }
+
+                // 檢查船隻是否有非玩家乘客
                 boolean hasNonPlayerPassenger = boat.getPassengers().stream()
                         .anyMatch(passenger -> !(passenger instanceof Player));
 
-                if (hasNonPlayerPassenger) {
+                // 檢查玩家是否在船上
+                boolean playerInBoat = boat.getPassengers().contains(player);
+
+                // 檢查船隻是否被實體牽引
+                boolean isLeashedByEntity = false;
+                if (boat.isLeashed()) {
+                    Entity leashHolder = boat.getLeashHolder();
+                    if (leashHolder != null && !(leashHolder instanceof Player)) {
+                        // 檢查牽引實體是否在玩家的牽引鏈中
+                        if (isEntityInPlayerLeashChain(player, leashHolder)) {
+                            isLeashedByEntity = true;
+                        }
+                    }
+                }
+
+                // 滿足任一條件就需要傳送船隻（但前提是船上沒有其他玩家）
+                if (hasNonPlayerPassenger || playerInBoat || isLeashedByEntity) {
+                    shouldTeleport = true;
+                }
+
+                if (shouldTeleport) {
                     double distance = boat.getLocation().distance(playerLoc);
                     if (distance < minDistance) {
                         minDistance = distance;
@@ -759,32 +835,116 @@ public class EventListener implements Listener {
         }
         return nearestBoat;
     }
+    private boolean isEntityInPlayerLeashChain(Player player, Entity targetEntity) {
+        Set<Entity> visited = new HashSet<>();
+        return checkLeashChainRecursive(player, targetEntity, visited, 0, 10);
+    }
+
+    private boolean checkLeashChainRecursive(Entity holder, Entity target, Set<Entity> visited, int depth, int maxDepth) {
+        if (depth >= maxDepth || visited.contains(holder)) {
+            return false;
+        }
+
+        visited.add(holder);
+
+        // 檢查holder是否直接牽引target
+        for (Entity entity : holder.getNearbyEntities(14, 14, 14)) {
+            if (entity instanceof LivingEntity livingEntity && livingEntity.isLeashed()) {
+                if (livingEntity.getLeashHolder() != null && livingEntity.getLeashHolder().equals(holder)) {
+                    if (livingEntity.equals(target)) {
+                        return true;
+                    }
+                    // 遞迴檢查被牽引的實體是否也在牽引其他實體
+                    if (checkLeashChainRecursive(livingEntity, target, visited, depth + 1, maxDepth)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     private void executeTeleport(Player player, Warp warp, Entity playerVehicle,
                                  Boat nearestBoat, Collection<Entity> leashedEntities) {
         Location targetLocation = warp.getLocation();
         UUID playerUUID = player.getUniqueId();
 
-        // 先傳送牽引的實體，避免牽繩斷裂
-        leashedEntities.forEach(entity -> entity.teleport(targetLocation));
+        // 再次安全檢查：確保即將傳送的船隻上沒有其他玩家
+        if (nearestBoat != null) {
+            boolean hasOtherPlayers = nearestBoat.getPassengers().stream()
+                    .anyMatch(passenger -> passenger instanceof Player && !passenger.equals(player));
 
-        // 傳送玩家
-        player.teleport(targetLocation);
-
-        // 處理載具傳送
-        if (playerVehicle != null && !playerVehicle.isDead()) {
-            playerVehicle.teleport(targetLocation);
-            // 確保玩家重新上載具（若不在乘客中）
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (!playerVehicle.getPassengers().contains(player)) {
-                    playerVehicle.addPassenger(player);
-                }
-            });
+            if (hasOtherPlayers) {
+                // 發現船隻上有其他玩家，取消傳送
+                sendConfigMessage(player, "messages.cannot_teleport_boat_has_other_players",
+                        Map.of("{reason}", "傳送過程中發現船隻上有其他玩家"));
+                returnPendingItems(player);
+                return;
+            }
         }
 
-        // 處理船隻傳送
+        // 收集所有需要維持牽引關係的實體對
+        Map<Entity, Entity> leashRelations = new HashMap<>();
+
+        // 記錄所有牽引關係
+        for (Entity entity : leashedEntities) {
+            if (entity instanceof LivingEntity livingEntity && livingEntity.isLeashed()) {
+                Entity leashHolder = livingEntity.getLeashHolder();
+                if (leashHolder != null) {
+                    leashRelations.put(entity, leashHolder);
+                }
+            }
+        }
+
+        // 先傳送所有牽引的實體，避免牽繩斷裂
+        leashedEntities.forEach(entity -> entity.teleport(targetLocation));
+
+        // 檢查玩家是否在即將傳送的船上
+        boolean playerInBoat = (nearestBoat != null && nearestBoat.getPassengers().contains(player));
+
+        if (!playerInBoat) {
+            // 玩家不在船上時才單獨傳送玩家
+            player.teleport(targetLocation);
+        }
+
+        // 處理載具傳送（非船隻載具）
+        if (playerVehicle != null && !playerVehicle.isDead() && !(playerVehicle instanceof Boat)) {
+            playerVehicle.teleport(targetLocation);
+            // 確保玩家重新上載具
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!playerVehicle.isDead() && !playerVehicle.getPassengers().contains(player)) {
+                    try {
+                        playerVehicle.addPassenger(player);
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("無法恢復玩家的載具乘坐關係");
+                    }
+                }
+            }, 3L);
+        }
+
+        // 處理船隻傳送（已確保沒有其他玩家）
         if (nearestBoat != null) {
             teleportBoatWithPassengers(nearestBoat, targetLocation);
+        }
+
+        // 延遲恢復牽引關係
+        if (!leashRelations.isEmpty()) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                for (Map.Entry<Entity, Entity> relation : leashRelations.entrySet()) {
+                    Entity leashedEntity = relation.getKey();
+                    Entity leashHolder = relation.getValue();
+
+                    if (!leashedEntity.isDead() && !leashHolder.isDead()) {
+                        if (leashedEntity instanceof LivingEntity livingEntity) {
+                            try {
+                                livingEntity.setLeashHolder(leashHolder);
+                            } catch (Exception e) {
+                                plugin.getLogger().warning("無法恢復實體 " + livingEntity.getType() + " 的牽引關係");
+                            }
+                        }
+                    }
+                }
+            }, 10L);
         }
 
         // 播放音效和特效
@@ -799,19 +959,110 @@ public class EventListener implements Listener {
     }
 
     private void teleportBoatWithPassengers(Boat boat, Location targetLocation) {
-        List<Entity> nonPlayerPassengers = boat.getPassengers().stream()
+        // 收集所有乘客（包含玩家和非玩家）
+        List<Entity> allPassengers = new ArrayList<>(boat.getPassengers());
+        List<Entity> nonPlayerPassengers = allPassengers.stream()
                 .filter(passenger -> !(passenger instanceof Player))
                 .toList();
+        List<Player> playerPassengers = allPassengers.stream()
+                .filter(passenger -> passenger instanceof Player)
+                .map(passenger -> (Player) passenger)
+                .toList();
 
-        // 解除乘客關係
-        nonPlayerPassengers.forEach(boat::removePassenger);
 
-        // 傳送船隻和乘客
+        // 檢查是否有傳送發起人在船上
+        Player teleportInitiator = null;
+        for (Entity passenger : boat.getPassengers()) {
+            if (passenger instanceof Player player) {
+                // 假設只有一個玩家會在船上（因為前面已經檢查過）
+                teleportInitiator = player;
+                break;
+            }
+        }
+
+        // 記錄牽引關係
+        Entity leashHolder = null;
+        if (boat.isLeashed()) {
+            leashHolder = boat.getLeashHolder();
+        }
+
+        // 解除所有非玩家乘客關係
+        allPassengers.forEach(boat::removePassenger);
+
+        // 先傳送船隻
         boat.teleport(targetLocation);
-        nonPlayerPassengers.forEach(passenger -> passenger.teleport(targetLocation));
 
-        // 恢復乘客關係
-        nonPlayerPassengers.forEach(boat::addPassenger);
+        // 傳送所有乘客
+        nonPlayerPassengers.forEach(passenger -> passenger.teleport(targetLocation));
+        playerPassengers.forEach(player -> player.teleport(targetLocation));
+
+        // 如果傳送發起人在船上，也傳送他
+        if (teleportInitiator != null) {
+            teleportInitiator.teleport(targetLocation);
+        }
+
+        // 延遲恢復乘客關係
+        Entity finalLeashHolder = leashHolder;
+        Player finalTeleportInitiator = teleportInitiator;
+
+        // 第一層延遲：恢復非玩家乘客
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!boat.isDead()) {
+                nonPlayerPassengers.forEach(passenger -> {
+                    if (!passenger.isDead()) {
+                        try {
+                            boat.addPassenger(passenger);
+                        } catch (Exception e) {
+                            // 重試一次
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                if (!boat.isDead() && !passenger.isDead()) {
+                                    try {
+                                        boat.addPassenger(passenger);
+                                    } catch (Exception ex) {
+                                        plugin.getLogger().warning("無法恢復實體 " + passenger.getType() + " 的乘坐關係");
+                                    }
+                                }
+                            }, 2L);
+                        }
+                    }
+                });
+            }
+        }, 3L);
+
+        // 第二層延遲：恢復傳送發起人的乘坐關係
+        if (finalTeleportInitiator != null) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!boat.isDead() && finalTeleportInitiator.isOnline() && !finalTeleportInitiator.isDead()) {
+                    try {
+                        boat.addPassenger(finalTeleportInitiator);
+                    } catch (Exception e) {
+                        // 重試一次
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            if (!boat.isDead() && finalTeleportInitiator.isOnline() && !finalTeleportInitiator.isDead()) {
+                                try {
+                                    boat.addPassenger(finalTeleportInitiator);
+                                } catch (Exception ex) {
+                                    plugin.getLogger().warning("無法恢復玩家 " + finalTeleportInitiator.getName() + " 的乘坐關係");
+                                }
+                            }
+                        }, 2L);
+                    }
+                }
+            }, 5L);
+        }
+
+        // 第三層延遲：恢復牽引關係
+        if (finalLeashHolder != null) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!boat.isDead() && !finalLeashHolder.isDead()) {
+                    try {
+                        boat.setLeashHolder(finalLeashHolder);
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("無法恢復船隻的牽引關係");
+                    }
+                }
+            }, 7L);
+        }
     }
 
     private void finalizeTeleport(Player player, Warp warp) {
