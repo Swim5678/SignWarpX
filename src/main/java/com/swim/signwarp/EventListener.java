@@ -765,7 +765,38 @@ public class EventListener implements Listener {
         Location targetLocation = warp.getLocation();
         UUID playerUUID = player.getUniqueId();
 
-        // 先傳送牽引的實體，避免牽繩斷裂
+        // 檢查是否啟用牽繩保存功能（新增配置選項）
+        boolean preserveLeashConnections = config.getBoolean("preserve-leash-connections", true);
+        Map<Entity, Entity> leashConnections = new HashMap<>();
+
+        if (preserveLeashConnections) {
+            // 記錄並暫時移除牽繩連接
+            for (Entity entity : leashedEntities) {
+                if (entity instanceof LivingEntity livingEntity && livingEntity.isLeashed()) {
+                    Entity leashHolder = livingEntity.getLeashHolder();
+                    if (leashHolder != null) {
+                        // 記錄牽繩關係
+                        leashConnections.put(entity, leashHolder);
+
+                        // 暫時移除牽繩連接（避免掉落牽繩物品）
+                        livingEntity.setLeashHolder(null);
+                    }
+                }
+            }
+
+            // 清理可能掉落的牽繩物品
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (Entity nearbyEntity : player.getNearbyEntities(8, 8, 8)) {
+                    if (nearbyEntity instanceof org.bukkit.entity.Item item) {
+                        if (item.getItemStack().getType() == Material.LEAD) {
+                            item.remove();
+                        }
+                    }
+                }
+            });
+        }
+
+        // 先傳送牽引的實體
         leashedEntities.forEach(entity -> entity.teleport(targetLocation));
 
         // 傳送玩家
@@ -785,6 +816,40 @@ public class EventListener implements Listener {
         // 處理船隻傳送
         if (nearestBoat != null) {
             teleportBoatWithPassengers(nearestBoat, targetLocation);
+        }
+
+        // 恢復牽繩連接（延遲執行確保實體完全傳送完成）
+        if (preserveLeashConnections && !leashConnections.isEmpty()) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                for (Map.Entry<Entity, Entity> entry : leashConnections.entrySet()) {
+                    Entity leashedEntity = entry.getKey();
+                    Entity leashHolder = entry.getValue();
+
+                    // 檢查實體是否仍然有效且在同一世界
+                    if (leashedEntity instanceof LivingEntity livingEntity &&
+                            !leashedEntity.isDead() &&
+                            leashHolder != null &&
+                            !leashHolder.isDead() &&
+                            leashedEntity.getWorld().equals(leashHolder.getWorld())) {
+
+                        // 檢查距離是否在合理範圍內（10格以內）
+                        double distance = leashedEntity.getLocation().distance(leashHolder.getLocation());
+                        if (distance <= 10.0) {
+                            try {
+                                livingEntity.setLeashHolder(leashHolder);
+                            } catch (Exception e) {
+                                // 如果恢復失敗，記錄警告但不中斷傳送流程
+                                plugin.getLogger().warning("[SignWarp] 無法恢復牽繩連接: " + e.getMessage());
+                            }
+                        } else {
+                            // 距離太遠，發送警告訊息給玩家
+                            if (leashHolder instanceof Player playerHolder) {
+                                sendConfigMessage(playerHolder, "messages.leash_restore_failed_distance");
+                            }
+                        }
+                    }
+                }
+            }, 3L); // 延遲 3 tick 確保傳送完全完成
         }
 
         // 播放音效和特效
