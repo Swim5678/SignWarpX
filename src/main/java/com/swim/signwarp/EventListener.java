@@ -969,223 +969,40 @@ public class EventListener implements Listener {
                 .map(passenger -> (Player) passenger)
                 .toList();
 
-
-        // 檢查是否有傳送發起人在船上
-        Player teleportInitiator = null;
-        for (Entity passenger : boat.getPassengers()) {
-            if (passenger instanceof Player player) {
-                // 假設只有一個玩家會在船上（因為前面已經檢查過）
-                teleportInitiator = player;
-                break;
-            }
-        }
-
         // 記錄牽引關係
         Entity leashHolder = null;
         if (boat.isLeashed()) {
             leashHolder = boat.getLeashHolder();
         }
 
-        // 解除所有非玩家乘客關係
-        allPassengers.forEach(boat::removePassenger);
-
-        // 先傳送船隻
+        // 新方法：不解除乘客關係，直接傳送整個船隻
+        // 這樣可以保持實體關係的完整性
         boat.teleport(targetLocation);
-
-        // 傳送所有乘客
-        nonPlayerPassengers.forEach(passenger -> passenger.teleport(targetLocation));
-        playerPassengers.forEach(player -> player.teleport(targetLocation));
-
-        // 如果傳送發起人在船上，也傳送他
-        if (teleportInitiator != null) {
-            teleportInitiator.teleport(targetLocation);
-        }
-
-        // 延遲恢復乘客關係
-        Entity finalLeashHolder = leashHolder;
-        Player finalTeleportInitiator = teleportInitiator;
-
-        // 第一層延遲：恢復非玩家乘客（增加延遲時間以確保同步）
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!boat.isDead()) {
-                nonPlayerPassengers.forEach(passenger -> {
-                    if (!passenger.isDead()) {
-                        restorePassengerWithRetry(boat, passenger, 0, 3);
-                    }
-                });
+        
+        // 確保所有乘客也被傳送到正確位置
+        allPassengers.forEach(passenger -> {
+            if (!passenger.isDead()) {
+                passenger.teleport(targetLocation);
             }
-        }, 5L);
+        });
 
-        // 第二層延遲：恢復傳送發起人的乘坐關係（增加延遲時間）
-        if (finalTeleportInitiator != null) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (!boat.isDead() && finalTeleportInitiator.isOnline() && !finalTeleportInitiator.isDead()) {
-                    restorePlayerPassengerWithRetry(boat, finalTeleportInitiator, 0, 3);
-                }
-            }, 8L);
-        }
-
-        // 第三層延遲：恢復牽引關係（增加延遲時間）
+        // 延遲恢復牽引關係（簡化的單次恢復）
+        Entity finalLeashHolder = leashHolder;
         if (finalLeashHolder != null) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (!boat.isDead() && !finalLeashHolder.isDead()) {
-                    restoreLeashWithRetry(boat, finalLeashHolder, 0, 3);
+                    try {
+                        boat.setLeashHolder(finalLeashHolder);
+                        plugin.getLogger().info("成功恢復船隻的牽引關係");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("無法恢復船隻的牽引關係: " + e.getMessage());
+                    }
                 }
-            }, 12L);
+            }, 20L); // 使用更長的延遲確保同步
         }
     }
 
-    /**
-     * 帶重試機制的乘客恢復方法
-     */
-    private void restorePassengerWithRetry(Boat boat, Entity passenger, int attempt, int maxAttempts) {
-        if (attempt >= maxAttempts || boat.isDead() || passenger.isDead()) {
-            if (attempt >= maxAttempts) {
-                plugin.getLogger().warning("無法恢復實體 " + passenger.getType() + " 的乘坐關係，已達最大重試次數");
-            }
-            return;
-        }
 
-        // 狀態驗證：確保船和乘客都在同一世界且位置相近
-        if (!isEntityReadyForPassengerRestore(boat, passenger)) {
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restorePassengerWithRetry(boat, passenger, attempt + 1, maxAttempts), delay);
-            return;
-        }
-
-        try {
-            boat.addPassenger(passenger);
-            plugin.getLogger().info("成功恢復實體 " + passenger.getType() + " 的乘坐關係");
-        } catch (Exception e) {
-            plugin.getLogger().warning("嘗試恢復實體 " + passenger.getType() + " 的乘坐關係失敗 (嘗試 " + (attempt + 1) + "/" + maxAttempts + "): " + e.getMessage());
-            
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restorePassengerWithRetry(boat, passenger, attempt + 1, maxAttempts), delay);
-        }
-    }
-
-    /**
-     * 帶重試機制的玩家乘客恢復方法
-     */
-    private void restorePlayerPassengerWithRetry(Boat boat, Player player, int attempt, int maxAttempts) {
-        if (attempt >= maxAttempts || boat.isDead() || !player.isOnline() || player.isDead()) {
-            if (attempt >= maxAttempts) {
-                plugin.getLogger().warning("無法恢復玩家 " + player.getName() + " 的乘坐關係，已達最大重試次數");
-            }
-            return;
-        }
-
-        // 狀態驗證：確保船和玩家都在同一世界且位置相近
-        if (!isEntityReadyForPassengerRestore(boat, player)) {
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restorePlayerPassengerWithRetry(boat, player, attempt + 1, maxAttempts), delay);
-            return;
-        }
-
-        try {
-            boat.addPassenger(player);
-            plugin.getLogger().info("成功恢復玩家 " + player.getName() + " 的乘坐關係");
-        } catch (Exception e) {
-            plugin.getLogger().warning("嘗試恢復玩家 " + player.getName() + " 的乘坐關係失敗 (嘗試 " + (attempt + 1) + "/" + maxAttempts + "): " + e.getMessage());
-            
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restorePlayerPassengerWithRetry(boat, player, attempt + 1, maxAttempts), delay);
-        }
-    }
-
-    /**
-     * 帶重試機制的牽引關係恢復方法
-     */
-    private void restoreLeashWithRetry(Boat boat, Entity leashHolder, int attempt, int maxAttempts) {
-        if (attempt >= maxAttempts || boat.isDead() || leashHolder.isDead()) {
-            if (attempt >= maxAttempts) {
-                plugin.getLogger().warning("無法恢復船隻的牽引關係，已達最大重試次數");
-            }
-            return;
-        }
-
-        // 狀態驗證：確保船和牽引者都在同一世界且位置相近
-        if (!isEntityReadyForLeashRestore(boat, leashHolder)) {
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restoreLeashWithRetry(boat, leashHolder, attempt + 1, maxAttempts), delay);
-            return;
-        }
-
-        try {
-            boat.setLeashHolder(leashHolder);
-            plugin.getLogger().info("成功恢復船隻的牽引關係");
-        } catch (Exception e) {
-            plugin.getLogger().warning("嘗試恢復船隻牽引關係失敗 (嘗試 " + (attempt + 1) + "/" + maxAttempts + "): " + e.getMessage());
-            
-            // 延遲重試
-            long delay = calculateRetryDelay(attempt);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> 
-                restoreLeashWithRetry(boat, leashHolder, attempt + 1, maxAttempts), delay);
-        }
-    }
-
-    /**
-     * 計算重試延遲時間（指數退避）
-     */
-    private long calculateRetryDelay(int attempt) {
-        return Math.min(2L * (1L << attempt), 10L); // 2, 4, 8, 10, 10, ... ticks
-    }
-
-    /**
-     * 檢查實體是否準備好進行乘客關係恢復
-     */
-    private boolean isEntityReadyForPassengerRestore(Boat boat, Entity passenger) {
-        if (boat.isDead() || passenger.isDead()) {
-            return false;
-        }
-
-        // 檢查是否在同一世界
-        if (!boat.getWorld().equals(passenger.getWorld())) {
-            return false;
-        }
-
-        // 檢查距離是否合理（5格內）
-        double distance = boat.getLocation().distance(passenger.getLocation());
-        if (distance > 5.0) {
-            plugin.getLogger().warning("船隻和乘客距離過遠 (" + String.format("%.2f", distance) + " 格)，延遲恢復");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 檢查實體是否準備好進行牽引關係恢復
-     */
-    private boolean isEntityReadyForLeashRestore(Boat boat, Entity leashHolder) {
-        if (boat.isDead() || leashHolder.isDead()) {
-            return false;
-        }
-
-        // 檢查是否在同一世界
-        if (!boat.getWorld().equals(leashHolder.getWorld())) {
-            return false;
-        }
-
-        // 檢查距離是否合理（牽繩最大距離10格）
-        double distance = boat.getLocation().distance(leashHolder.getLocation());
-        if (distance > 10.0) {
-            plugin.getLogger().warning("船隻和牽引者距離過遠 (" + String.format("%.2f", distance) + " 格)，延遲恢復");
-            return false;
-        }
-
-        return true;
-    }
 
     private void finalizeTeleport(Player player, Warp warp) {
         UUID playerUUID = player.getUniqueId();

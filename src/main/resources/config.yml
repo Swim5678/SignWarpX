@@ -103,6 +103,7 @@ messages:
   warp_world_not_found: "<red>The world where the warp is located does not exist or is not loaded! Please contact an administrator."
   player_not_online: "<red>Player '{player}' is currently offline! Please try again when the player is online."
   cannot_teleport_on_boat: "<red>Cannot teleport while on a boat!</red>"
+  cannot_teleport_boat_has_other_players: "<red>Cannot teleport! {reason}</red>"
   leash_depth_warning: "<yellow>⚠ Warning: Your leash chain has reached the maximum depth of {max-depth}! Entities too deep cannot be teleported together"
 
   # Group function messages
