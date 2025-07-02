@@ -524,9 +524,20 @@ public class EventListener implements Listener {
         }
 
         // 檢查船隻限制
-        if (player.getVehicle() instanceof Boat) {
-            sendConfigMessage(player, "messages.cannot_teleport_on_boat");
-            return;
+        if (player.getVehicle() instanceof Boat boat) {
+            // 檢查船隻是否包含被牽引的怪物，如果是則允許傳送
+            if (!isBoatLeashedToMonster(boat)) {
+                sendConfigMessage(player, "messages.cannot_teleport_on_boat");
+                return;
+            }
+            
+            // 安全檢查：確保船上沒有其他玩家
+            boolean hasOtherPlayers = boat.getPassengers().stream()
+                    .anyMatch(passenger -> passenger instanceof Player && !passenger.equals(player));
+            if (hasOtherPlayers) {
+                sendConfigMessage(player, "messages.cannot_teleport_boat_with_other_players");
+                return;
+            }
         }
 
         // 檢查並扣除使用物品
@@ -685,6 +696,24 @@ public class EventListener implements Listener {
                     if (!collectedEntities.contains(livingEntity)) {
                         collectedEntities.add(livingEntity);
 
+                        // 檢查這個被牽引的實體是否在船上，如果是則也收集船隻
+                        Entity vehicle = livingEntity.getVehicle();
+                        if (vehicle instanceof Boat boat && !collectedEntities.contains(boat)) {
+                            // 安全檢查：確保船上沒有其他玩家
+                            boolean hasOtherPlayers = boat.getPassengers().stream()
+                                    .anyMatch(passenger -> passenger instanceof Player);
+                            if (!hasOtherPlayers) {
+                                collectedEntities.add(boat);
+                                
+                                // 收集船隻上的其他非玩家乘客
+                                for (Entity passenger : boat.getPassengers()) {
+                                    if (!(passenger instanceof Player) && !collectedEntities.contains(passenger)) {
+                                        collectedEntities.add(passenger);
+                                    }
+                                }
+                            }
+                        }
+
                         // 遞迴檢查這個被牽引的實體是否也在牽引其他實體
                         collectLeashedEntitiesRecursive(livingEntity, collectedEntities, visited,
                                 currentDepth + 1, maxDepth, maxReachedDepth);
@@ -721,6 +750,24 @@ public class EventListener implements Listener {
             if (entity instanceof LivingEntity livingEntity) {
                 if (livingEntity.isLeashed() && livingEntity.getLeashHolder().equals(player)) {
                     collectedEntities.add(livingEntity);
+                    
+                    // 檢查這個被牽引的實體是否在船上
+                    Entity vehicle = livingEntity.getVehicle();
+                    if (vehicle instanceof Boat boat && !collectedEntities.contains(boat)) {
+                        // 安全檢查：確保船上沒有其他玩家
+                        boolean hasOtherPlayers = boat.getPassengers().stream()
+                                .anyMatch(passenger -> passenger instanceof Player);
+                        if (!hasOtherPlayers) {
+                            collectedEntities.add(boat);
+                            
+                            // 收集船隻上的其他非玩家乘客
+                            for (Entity passenger : boat.getPassengers()) {
+                                if (!(passenger instanceof Player) && !collectedEntities.contains(passenger)) {
+                                    collectedEntities.add(passenger);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -732,6 +779,24 @@ public class EventListener implements Listener {
                 if (entity instanceof LivingEntity livingEntity) {
                     if (livingEntity.isLeashed() && livingEntity.getLeashHolder().equals(vehicleEntity)) {
                         collectedEntities.add(livingEntity);
+                        
+                        // 檢查這個被牽引的實體是否在船上
+                        Entity vehicle = livingEntity.getVehicle();
+                        if (vehicle instanceof Boat boat && !collectedEntities.contains(boat)) {
+                            // 安全檢查：確保船上沒有其他玩家
+                            boolean hasOtherPlayers = boat.getPassengers().stream()
+                                    .anyMatch(passenger -> passenger instanceof Player);
+                            if (!hasOtherPlayers) {
+                                collectedEntities.add(boat);
+                                
+                                // 收集船隻上的其他非玩家乘客
+                                for (Entity passenger : boat.getPassengers()) {
+                                    if (!(passenger instanceof Player) && !collectedEntities.contains(passenger)) {
+                                        collectedEntities.add(passenger);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -748,7 +813,10 @@ public class EventListener implements Listener {
                 boolean hasNonPlayerPassenger = boat.getPassengers().stream()
                         .anyMatch(passenger -> !(passenger instanceof Player));
 
-                if (hasNonPlayerPassenger) {
+                // 也檢查船隻是否包含被牽引的怪物（適用於被牽引的船隻）
+                boolean hasLeashedMonster = isBoatLeashedToMonster(boat);
+
+                if (hasNonPlayerPassenger || hasLeashedMonster) {
                     double distance = boat.getLocation().distance(playerLoc);
                     if (distance < minDistance) {
                         minDistance = distance;
@@ -758,6 +826,17 @@ public class EventListener implements Listener {
             }
         }
         return nearestBoat;
+    }
+
+    /**
+     * 檢查船隻是否包含被牽引的怪物
+     */
+    private boolean isBoatLeashedToMonster(Boat boat) {
+        // 檢查船隻上是否有被牽引的非玩家實體
+        return boat.getPassengers().stream()
+                .anyMatch(passenger -> passenger instanceof LivingEntity livingPassenger 
+                    && !(passenger instanceof Player) 
+                    && livingPassenger.isLeashed());
     }
 
     private void executeTeleport(Player player, Warp warp, Entity playerVehicle,
@@ -782,8 +861,8 @@ public class EventListener implements Listener {
             });
         }
 
-        // 處理船隻傳送
-        if (nearestBoat != null) {
+        // 處理船隻傳送（只有當船隻不在牽引實體中時才處理）
+        if (nearestBoat != null && !leashedEntities.contains(nearestBoat)) {
             teleportBoatWithPassengers(nearestBoat, targetLocation);
         }
 
