@@ -18,7 +18,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    env:
+      COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: repo.papermc.io,jitpack.io
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
