@@ -15,6 +15,15 @@ teleport-use-cooldown: 10
 enable-recursive-leash: true  # 是否啟用遞迴牽引功能
 max-leash-depth: 5           # 最大牽引深度（防止過長的牽引鏈）
 
+# 船隻傳送設定
+boat-teleportation:
+  # 啟用增強型船隻乘客恢復功能（true 啟用，false 使用簡單方法）
+  enhanced-passenger-restoration: true
+  # 乘客恢復的最大重試次數
+  max-restoration-attempts: 3
+  # 啟用詳細的船隻傳送除錯記錄
+  debug-logging: true
+
 # 跨次元傳送設定
 cross-dimension-teleport:
   # 是否允許跨次元傳送 (true 允許, false 禁止)

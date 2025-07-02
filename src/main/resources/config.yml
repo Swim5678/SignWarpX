@@ -15,6 +15,15 @@ teleport-use-cooldown: 10
 enable-recursive-leash: true  # Enable recursive leash function
 max-leash-depth: 5           # Maximum leash depth (to prevent excessively long leash chains)
 
+# Boat teleportation settings
+boat-teleportation:
+  # Enable enhanced boat passenger restoration (true enables, false uses simple method)
+  enhanced-passenger-restoration: true
+  # Maximum retry attempts for passenger restoration
+  max-restoration-attempts: 3
+  # Enable detailed logging for boat teleportation debugging
+  debug-logging: true
+
 # Cross-dimension teleport settings
 cross-dimension-teleport:
   # Allow cross-dimension teleportation (true allows, false disables)
