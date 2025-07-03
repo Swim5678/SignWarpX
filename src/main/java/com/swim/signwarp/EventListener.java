@@ -62,24 +62,6 @@ public class EventListener implements Listener {
 
     // ============= 共用方法區域 =============
 
-    /**
-     * 統一的權限檢查方法
-     */
-    private enum PermissionType {
-        CREATE("signwarp.create", "messages.create_permission"),
-        USE("signwarp.use", "messages.use_permission"),
-        DESTROY("signwarp.destroy", "messages.destroy_permission"),
-        ADMIN("signwarp.admin", null);
-
-        private final String permission;
-        private final String messageKey;
-
-        PermissionType(String permission, String messageKey) {
-            this.permission = permission;
-            this.messageKey = messageKey;
-        }
-    }
-
     private boolean hasPermission(Player player, PermissionType type) {
         if (player.hasPermission(type.permission)) {
             return true;
@@ -256,13 +238,13 @@ public class EventListener implements Listener {
         return true;
     }
 
-    // ============= 事件處理方法 =============
-
     @EventHandler
     public void onPluginEnable(PluginEnableEvent event) {
         validateConfigItems();
         startCooldownCleanupTask();
     }
+
+    // ============= 事件處理方法 =============
 
     private void validateConfigItems() {
         String createWPTItem = config.getString("create-wpt-item", "none");
@@ -979,8 +961,6 @@ public class EventListener implements Listener {
         return !world1.equals(world2);
     }
 
-    // ============= 其他事件處理 =============
-
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
@@ -1020,14 +1000,14 @@ public class EventListener implements Listener {
         cancelTeleportTask(player, "messages.teleport-death-cancelled");
     }
 
-    // ============= 方塊保護相關事件 =============
-
     @EventHandler
     public void onBlockPistonExtend(BlockPistonExtendEvent event) {
         if (hasBlockWarpSign(event.getBlocks())) {
             event.setCancelled(true);
         }
     }
+
+    // ============= 方塊保護相關事件 =============
 
     @EventHandler
     public void onBlockPistonRetract(BlockPistonRetractEvent event) {
@@ -1074,8 +1054,6 @@ public class EventListener implements Listener {
         }
     }
 
-    // ============= 輔助方法 =============
-
     private boolean isGravityAffected(Material type) {
         return type == Material.SAND || type == Material.GRAVEL ||
                 type == Material.ANVIL || type == Material.RED_SAND
@@ -1089,6 +1067,8 @@ public class EventListener implements Listener {
                 || type == Material.GREEN_CONCRETE_POWDER || type == Material.BLACK_CONCRETE_POWDER
                 || type == Material.RED_CONCRETE_POWDER;
     }
+
+    // ============= 輔助方法 =============
 
     private boolean hasBlockWarpSign(Block block) {
         return SignUtils.hasBlockSign(block, this::isWarpSign);
@@ -1105,5 +1085,23 @@ public class EventListener implements Listener {
         }
         SignData signData = new SignData(lines);
         return signData.isWarpSign();
+    }
+
+    /**
+     * 統一的權限檢查方法
+     */
+    private enum PermissionType {
+        CREATE("signwarp.create", "messages.create_permission"),
+        USE("signwarp.use", "messages.use_permission"),
+        DESTROY("signwarp.destroy", "messages.destroy_permission"),
+        ADMIN("signwarp.admin", null);
+
+        private final String permission;
+        private final String messageKey;
+
+        PermissionType(String permission, String messageKey) {
+            this.permission = permission;
+            this.messageKey = messageKey;
+        }
     }
 }
