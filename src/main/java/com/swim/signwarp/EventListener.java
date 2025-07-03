@@ -611,7 +611,7 @@ public class EventListener implements Listener {
         // 準備傳送相關實體
         Collection<Entity> leashedEntities = collectLeashedEntities(player);
         Entity playerVehicle = player.getVehicle();
-        Boat nearestBoat = findNearestBoatWithPassengers(player);
+        Boat nearestBoat = findNearestBoatWithPassengers(player, leashedEntities); // 傳入韁繩實體列表
 
         // 排程傳送任務
         BukkitTask teleportTask = Bukkit.getScheduler().runTaskLater(plugin, () -> executeTeleport(player, warp, playerVehicle, nearestBoat, leashedEntities), delay * 20L);
@@ -738,17 +738,46 @@ public class EventListener implements Listener {
         }
     }
 
-    private Boat findNearestBoatWithPassengers(Player player) {
+    private Boat findNearestBoatWithPassengers(Player player, Collection<Entity> leashedEntities) {
         Boat nearestBoat = null;
         double minDistance = Double.MAX_VALUE;
         Location playerLoc = player.getLocation();
 
         for (Entity entity : player.getWorld().getNearbyEntities(playerLoc, 5, 5, 5)) {
             if (entity instanceof Boat boat) {
+                boolean shouldTeleportBoat = false;
+
+                // 原有邏輯：檢查是否有非玩家乘客
                 boolean hasNonPlayerPassenger = boat.getPassengers().stream()
                         .anyMatch(passenger -> !(passenger instanceof Player));
 
                 if (hasNonPlayerPassenger) {
+                    shouldTeleportBoat = true;
+                }
+
+                // 新增邏輯：檢查船隻是否被韁繩拴住
+                // 檢查船隻本身是否在牽引實體列表中（雖然船隻不是LivingEntity，但可能有特殊情況）
+                if (leashedEntities.contains(boat)) {
+                    shouldTeleportBoat = true;
+                }
+
+                // 檢查船隻的乘客是否被韁繩拴住
+                for (Entity passenger : boat.getPassengers()) {
+                    if (leashedEntities.contains(passenger)) {
+                        shouldTeleportBoat = true;
+                        break;
+                    }
+                }
+
+                // 檢查韁繩實體是否在船隻附近（可能正在拖拽船隻）
+                for (Entity leashedEntity : leashedEntities) {
+                    if (leashedEntity.getLocation().distance(boat.getLocation()) <= 3.0) {
+                        shouldTeleportBoat = true;
+                        break;
+                    }
+                }
+
+                if (shouldTeleportBoat) {
                     double distance = boat.getLocation().distance(playerLoc);
                     if (distance < minDistance) {
                         minDistance = distance;
