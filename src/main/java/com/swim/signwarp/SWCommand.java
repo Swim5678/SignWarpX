@@ -456,7 +456,8 @@ public class SWCommand implements CommandExecutor, TabCompleter {
         if (sender.hasPermission("signwarp.reload")) {
             plugin.reloadConfig();
             EventListener.updateConfig(plugin);
-            sendMessage(sender, "<green>配置已重新載入");
+            sendConfigMessage(sender, "messages.reload_success",
+                    "<green>配置已重新載入");
         } else {
             sendConfigMessage(sender, "messages.not_permission",
                     "<red>您沒有權限使用此指令。");

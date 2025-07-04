@@ -50,7 +50,7 @@ world-display-names:
 # The following settings affect only the creation of Warp Target (WPT) signs
 ###############################################################################
 # Item required to create Warp Target sign (set to none if not required)
-create-wpt-item: DIAMOND_SWORD
+create-wpt-item: DIAMOND
 # Number of items consumed when creating Warp Target sign
 create-wpt-item-cost: 1
 # Maximum number of warp points each player can create (-1 means unlimited)
@@ -66,6 +66,7 @@ show-creator-on-sign: true
 # Custom Messages
 ###############################################################################
 messages:
+  reload_success: "<green>Configuration reloaded successfully!"
   create_permission: "<red>You don't have permission to create a warp!"
   no_warp_name: "<red>Warp name not set!\nPlease set the warp name on the second line."
   warp_created: "<green>Warp point created successfully."

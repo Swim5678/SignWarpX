@@ -349,7 +349,7 @@ public class EventListener implements Listener {
     private void handleWarpSignCreation(SignChangeEvent event, Player player, SignData signData, Warp existingWarp) {
         // 檢查目標 WarpTarget 是否存在
         if (existingWarp == null) {
-            sendConfigMessage(player, "messages.warp_not_exist",
+            sendConfigMessage(player, "messages.warp_not_found",
                     Map.of("{warp-name}", signData.warpName));
             event.setCancelled(true);
             return;

@@ -50,7 +50,7 @@ world-display-names:
 # 以下設定只影響建立 Warp Target (WPT) 標誌
 ###############################################################################
 # 建立 Warp Target 標誌所需的物品（設為 none 代表不需要）
-create-wpt-item: DIAMOND_SWORD
+create-wpt-item: DIAMOND
 # 建立 Warp Target 標誌時消耗的物品數量
 create-wpt-item-cost: 1
 # 每位玩家最多可創建的傳送點數量（-1 表示無限制）
@@ -66,6 +66,7 @@ show-creator-on-sign: true
 # 自訂訊息
 ###############################################################################
 messages:
+  reload_success: "<green>配置已重新載入"
   create_permission: "<red>您沒有權限建立傳送點！"
   no_warp_name: "<red>未設定傳送名稱！\n請在第二行設定傳送名稱。"
   warp_created: "<green>傳送點已成功建立。"
