@@ -3,17 +3,16 @@
 # 如需切換語言，請將想要的語言檔案複製（或移動）到插件主目錄，並重新命名為 config.yml（覆蓋原有檔案）。
 # 例如：languages/config-en.yml 複製為 config.yml，即可切換成英文介面。
 
-# 使用傳送點時需要的物品（設為 none 代表不需要）
+# 使用傳送牌時需要的物品（設為 none 代表不需要）
 use-item: ENDER_PEARL
-# 使用傳送點時消耗的物品數量
+# 使用傳送牌時消耗的物品數量
 use-cost: 1
 # 傳送前的等待時間（單位：秒）
 teleport-delay: 5
 # 設置傳送完成後的冷卻（單位：秒）
 teleport-use-cooldown: 10
 # 牽引相關設定
-enable-recursive-leash: true  # 是否啟用遞迴牽引功能
-max-leash-depth: 5           # 最大牽引深度（防止過長的牽引鏈）
+max-leash-depth: 5 # 最大牽引深度（防止過長的牽引鏈）
 
 # 跨次元傳送設定
 cross-dimension-teleport:
@@ -27,7 +26,7 @@ warp-groups:
   enabled: true
   # 每位玩家最多可建立的群組數量 (OP 不受此限制)
   max-groups-per-player: 5
-  # 每個群組最多可包含的傳送點數量 (OP 不受此限制)
+  # 每個群組最多可包含的傳送錨點數量 (OP 不受此限制)
   max-warps-per-group: 10
   # 每個群組最多可邀請的成員數量 (OP 不受此限制)
   max-members-per-group: 20
@@ -35,9 +34,9 @@ warp-groups:
   allow-normal-players: true
 
 ###############################################################################
- # 以下設定只影響建立 Warp (WP) 標誌
+# 以下設定只影響建立 Warp (WP) 標誌
 ###############################################################################
-# 告示牌世界資訊顯示設定
+# 傳送牌世界資訊顯示設定
 sign-world-info:
   enabled: true
   format: "§7世界: §f{world-name}"
@@ -53,11 +52,11 @@ world-display-names:
 create-wpt-item: DIAMOND
 # 建立 Warp Target 標誌時消耗的物品數量
 create-wpt-item-cost: 1
-# 每位玩家最多可創建的傳送點數量（-1 表示無限制）
+# 每位玩家最多可創建的傳送錨點數量（-1 表示無限制）
 max-warps-per-player: 10
 # OP 是否不受創建數量限制（true 表示 OP 無限制）
 op-unlimited-warps: true
-# 預設的傳送點可見性（true 為私人，false 為公共）
+# 預設的傳送錨點可見性（true 為私人，false 為公共）
 default-visibility: false
 # 是否在 WPT 告示牌上顯示建立者資訊（true 表示顯示，false 表示不顯示）
 show-creator-on-sign: true
@@ -67,69 +66,69 @@ show-creator-on-sign: true
 ###############################################################################
 messages:
   reload_success: "<green>配置已重新載入"
-  create_permission: "<red>您沒有權限建立傳送點！"
-  no_warp_name: "<red>未設定傳送名稱！\n請在第二行設定傳送名稱。"
-  warp_created: "<green>傳送點已成功建立。"
-  warp_name_taken: "<red>已有相同名稱的傳送目標！"
-  warp_destroyed: "<green>傳送目標已被摧毀。"
-  target_sign_created: "<green>傳送點已成功建立。"
-  destroy_permission: "<red>您沒有權限摧毀傳送點！"
-  invalid_item: "<red>您必須使用 {use-item} 來啟用此傳送！"
-  not_enough_item: "<red>您沒有足夠的 {use-item} x{use-cost} 來建立此傳送點。"
-  warp_not_found: "<red>指定的傳送目標不存在！"
-  use_permission: "<red>您沒有權限使用此傳送點！"
+  create_permission: "<red>您沒有權限建立傳送錨點！"
+  no_warp_name: "<red>未設定傳送錨點名稱！\n請在第二行設定傳送錨點名稱。"
+  warp_created: "<green>傳送牌已成功建立。"
+  warp_name_taken: "<red>已有相同名稱的傳送錨點！"
+  warp_destroyed: "<green>傳送錨點已被摧毀。"
+  target_sign_created: "<green>傳送錨點已成功建立。"
+  destroy_permission: "<red>您沒有權限摧毀傳送錨點！"
+  invalid_item: "<red>您必須使用 {use-item} 來啟用此次傳送！"
+  not_enough_item: "<red>您沒有足夠的 {use-item} x{use-cost} 來建立此傳送錨點。"
+  warp_not_found: "<red>指定的傳送錨點不存在！"
+  use_permission: "<red>您沒有權限使用此傳送牌！"
   teleport: "<yellow>正在傳送到 {warp-name}，{time} 秒後到達..."
   teleport-success: "<green>成功傳送到 {warp-name}。"
   teleport-cancelled: "<red>傳送已取消。"
   not_permission: "<red>您沒有權限！"
   cooldown: "<red>您必須等待 {cooldown} 秒才能再次傳送。"
-  warp_visibility_changed: "<green>傳送點 {warp-name} 的使用權限已更改為{visibility}。"
-  cant_modify_others_warp: "<red>您只能更改自己創建的傳送點！"
-  set_visibility_usage: "<red>用法: /wp set <公共|私人> <傳送點名稱>"
+  warp_visibility_changed: "<green>傳送錨點 {warp-name} 的使用權限已更改為{visibility}。"
+  cant_modify_others_warp: "<red>您只能更改自己創建的傳送錨點！"
+  set_visibility_usage: "<red>用法: /wp set <公共|私人> <傳送錨點名稱>"
   invalid_visibility: "<red>使用權限必須是 '公共' 或 '私人'"
   private_warp: "<red>權限不足。"
-  invite_success: "<green>已成功邀請 {player} 使用傳送點 '{warp-name}'！"
-  invite_received: "<green>{inviter} 邀請你使用傳送點 '{warp-name}'！"
-  invite_failed: "<red>無法邀請玩家使用此傳送點！"
-  uninvite_success: "<green>已移除 {player} 使用傳送點 '{warp-name}' 的權限。"
+  invite_success: "<green>已成功邀請 {player} 使用傳送錨點 '{warp-name}'！"
+  invite_received: "<green>{inviter} 邀請你使用傳送錨點 '{warp-name}'！"
+  invite_failed: "<red>無法邀請玩家使用此傳送錨點！"
+  uninvite_success: "<green>已移除 {player} 使用傳送錨點 '{warp-name}' 的權限。"
   player_not_found: "<red>找不到玩家 '{player}' 或該玩家離線！"
-  not_your_warp: "<red>你只能邀請玩家使用你自己的傳送點！"
-  invite_usage: "<red>用法: /wp invite <玩家> <傳送點名稱>"
-  uninvite_usage: "<red>用法: /wp uninvite <玩家> <傳送點名稱>"
-  already_invited: "<red>玩家 {player} 已經被邀請使用此傳送點！"
-  not_invited: "<red>玩家 {player} 未被邀請使用此傳送點。"
-  invite_list: "<green>傳送點 '{warp-name}' 的邀請列表:"
-  no_invites: "<yellow>此傳送點尚未邀請任何玩家。"
-  cant_modify_warp: "<red>您無法修改此傳送點的邀請名單！"
-  warp_limit_reached: "<red>您已達到最大傳送點創建數量限制 ({current}/{max})！"
-  warp_count_info: "<green>您目前已創建 {current} 個傳送點，限制為 {max} 個。"
-  unlimited_warps: "<green>您擁有無限制的傳送點創建權限。"
-  my_warps_header: "<green>=== {player}擁有的傳送點 ==="
-  no_warps_owned: "<gray>{player}目前沒有擁有任何傳送點。"
+  not_your_warp: "<red>你只能邀請玩家使用你自己的傳送錨點！"
+  invite_usage: "<red>用法: /wp invite <玩家> <傳送錨點名稱>"
+  uninvite_usage: "<red>用法: /wp uninvite <玩家> <傳送錨點名稱>"
+  already_invited: "<red>玩家 {player} 已經被邀請使用此傳送錨點！"
+  not_invited: "<red>玩家 {player} 未被邀請使用此傳送錨點。"
+  invite_list: "<green>傳送錨點 '{warp-name}' 的邀請列表:"
+  no_invites: "<yellow>此傳送錨點尚未邀請任何玩家。"
+  cant_modify_warp: "<red>您無法修改此傳送錨點的邀請名單！"
+  warp_limit_reached: "<red>您已達到最大傳送錨點創建數量限制 ({current}/{max})！"
+  warp_count_info: "<green>您目前已創建 {current} 個傳送錨點，限制為 {max} 個。"
+  unlimited_warps: "<green>您擁有無限制的傳送錨點創建權限。"
+  my_warps_header: "<green>=== {player}擁有的傳送錨點 ==="
+  no_warps_owned: "<gray>{player}目前沒有擁有任何傳送錨點。"
   warp_list_format: "<white>{index}. <aqua>{warp-name} <gray>({visibility}) - <yellow>{world} <gray>({x}, {y}, {z})"
-  total_warps: "<green>{player}總共擁有 {count} 個傳送點"
-  not_permission_view_others: "<red>您沒有權限查看其他玩家的傳送點！"
-  player_not_found_or_no_warps: "<red>找不到玩家 '{player}' 或該玩家沒有任何傳送點。"
+  total_warps: "<green>{player}總共擁有 {count} 個傳送錨點"
+  not_permission_view_others: "<red>您沒有權限查看其他玩家的傳送錨點！"
+  player_not_found_or_no_warps: "<red>找不到玩家 '{player}' 或該玩家沒有任何傳送錨點。"
   creator-display-format: "<gray>建立者: <white>{creator}"
-  cross_dimension_disabled: "<red>跨次元傳送已被禁用！您無法傳送到位於 <yellow>{target-world} <red>世界的傳送點。"
-  warp_world_not_found: "<red>傳送點所在的世界不存在或未載入！請聯絡管理員。"
+  cross_dimension_disabled: "<red>跨次元傳送已被禁用！您無法傳送到位於 <yellow>{target-world} <red>世界的傳送錨點。"
+  warp_world_not_found: "<red>傳送錨點所在的世界不存在或未載入！請聯絡管理員。"
   player_not_online: "<red>玩家 '{player}' 目前不在線上！請等待玩家上線後再進行操作。"
   cannot_teleport_on_boat: "<red>玩家在船上無法進行傳送！</red>"
-  leash_depth_warning: "<yellow>⚠ 警告：您的牽引鏈已達到最大深度限制 {max-depth} 層！部分深層實體無法一起傳送"
+  leash_depth_warning: "<yellow>⚠ 警告：您的牽引鏈已達到最大深度限制 {max-depth} 層！部分實體無法一起傳送"
 
   # 群組功能相關訊息
   group_created: "<green>成功建立群組 '{group-name}'！"
   group_deleted: "<green>群組 '{group-name}' 已刪除。"
-  warp_added_to_group: "<green>傳送點 '{warp-name}' 已加入群組 '{group-name}'。"
-  warp_removed_from_group: "<green>傳送點 '{warp-name}' 已從群組 '{group-name}' 中移除。"
+  warp_added_to_group: "<green>傳送錨點 '{warp-name}' 已加入群組 '{group-name}'。"
+  warp_removed_from_group: "<green>傳送錨點 '{warp-name}' 已從群組 '{group-name}' 中移除。"
   player_invited_to_group: "<green>玩家 '{player}' 已被邀請加入群組 '{group-name}'。"
   player_removed_from_group: "<green>玩家 '{player}' 已從群組 '{group-name}' 中移除。"
   group_not_found: "<red>找不到群組 '{group-name}'。"
   not_group_owner: "<red>您沒有權限管理此群組！"
-  warp_not_private: "<red>只有私人傳送點才能加入群組！"
-  warp_already_in_group: "<red>傳送點 '{warp-name}' 已經在群組 '{existing-group}' 中。"
+  warp_not_private: "<red>只有私人傳送錨點才能加入群組！"
+  warp_already_in_group: "<red>傳送錨點 '{warp-name}' 已經在群組 '{existing-group}' 中。"
   max_groups_reached: "<red>您已達到群組建立上限（{max}）！"
-  no_permission_use_warp: "<red>您沒有權限使用此傳送點！"
+  no_permission_use_warp: "<red>您沒有權限使用此傳送錨點！"
   teleport_success: "<green>成功傳送到 '{warp-name}'！"
   teleport_failed: "<red>傳送失敗，請稍後再試。"
 
@@ -137,7 +136,7 @@ messages:
   group_feature_disabled: "<red>群組功能目前已停用！"
   group_feature_no_permission: "<red>您沒有權限使用群組功能！"
   group_feature_admin_only: "<red>群組功能僅限管理員使用！"
-  group_warps_limit_reached: "<red>群組傳送點數量已達上限（{max}）！"
+  group_warps_limit_reached: "<red>群組傳送錨點數量已達上限（{max}）！"
   group_members_limit_reached: "<red>群組成員數量已達上限（{max}）！"
 
   # 群組說明指令訊息
@@ -145,13 +144,13 @@ messages:
   group_help_create: "<aqua>/wp group create <群組名稱> <gray>- 建立新群組"
   group_help_list: "<aqua>/wp group list <gray>- 查看您的群組列表"
   group_help_info: "<aqua>/wp group info <群組名稱> <gray>- 查看群組詳細資訊"
-  group_help_add: "<aqua>/wp group add <群組名稱> <傳送點> <gray>- 將傳送點加入群組"
-  group_help_remove: "<aqua>/wp group remove <群組名稱> <傳送點> <gray>- 從群組移除傳送點"
+  group_help_add: "<aqua>/wp group add <群組名稱> <傳送錨點> <gray>- 將傳送錨點加入群組"
+  group_help_remove: "<aqua>/wp group remove <群組名稱> <傳送錨點> <gray>- 從群組移除傳送錨點"
   group_help_invite: "<aqua>/wp group invite <群組名稱> <玩家> <gray>- 邀請玩家加入群組"
   group_help_uninvite: "<aqua>/wp group uninvite <群組名稱> <玩家> <gray>- 移除群組成員"
   group_help_delete: "<aqua>/wp group delete <群組名稱> <gray>- 刪除群組"
 
   # TP 指令相關訊息
   tp_op_only: "<red>權限不足"
-  tp_usage: "<yellow>用法: /signwarp tp <傳送點名稱>"
+  tp_usage: "<yellow>用法: /signwarp tp <傳送錨點名稱>"
   tp_success: "<green>已傳送到: {warp-name} (建立者: {creator})"
