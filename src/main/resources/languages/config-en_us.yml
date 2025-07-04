@@ -34,7 +34,18 @@ warp-groups:
   # Allow normal players to use group functions (true allows, false only for OP)
   allow-normal-players: true
 
-
+###############################################################################
+# The following settings affect only the creation of Warp Target (WPT) signs
+###############################################################################
+# Signboard world information display settings
+sign-world-info:
+  enabled: true
+  format: "§7World: §f{world-name}"
+# World name display configuration
+world-display-names:
+  world: "Overworld"
+  world_nether: "Nether"
+  world_the_end: "End"
 ###############################################################################
 # The following settings affect only the creation of Warp Target (WPT) signs
 ###############################################################################

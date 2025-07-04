@@ -343,13 +343,47 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * 處理 Warp 告示牌建立時的世界資訊設置
+     */
     private void handleWarpSignCreation(SignChangeEvent event, Player player, SignData signData, Warp existingWarp) {
+        // 檢查目標 WarpTarget 是否存在
         if (existingWarp == null) {
-            sendConfigMessage(player, "messages.warp_not_found");
+            sendConfigMessage(player, "messages.warp_not_exist",
+                    Map.of("{warp-name}", signData.warpName));
             event.setCancelled(true);
             return;
         }
-        event.line(0, Component.text(SignData.HEADER_WARP).color(NamedTextColor.BLUE));
+
+        // 檢查是否啟用世界資訊顯示
+        boolean showWorldInfo = config.getBoolean("sign-world-info.enabled", true);
+        if (showWorldInfo) {
+            // 獲取目標世界名稱
+            String worldName = existingWarp.getLocation().getWorld().getName();
+            String displayWorldName = getDisplayWorldName(worldName);
+
+            // 獲取顯示格式和顏色
+            String format = config.getString("sign-world-info.format", "世界: {world-name}");
+            String colorName = config.getString("sign-world-info.color", "GRAY");
+
+            // 替換佔位符
+            String worldInfo = format.replace("{world-name}", displayWorldName);
+
+            // 設定顏色
+            NamedTextColor color;
+            try {
+                color = NamedTextColor.NAMES.value(colorName.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                color = NamedTextColor.GRAY; // 預設顏色
+            }
+
+            // 設置告示牌第三行為世界資訊
+            event.line(2, Component.text(worldInfo).color(color));
+        }
+
+        // 設置告示牌第一行顏色
+        event.line(0, Component.text(signData.header).color(NamedTextColor.DARK_BLUE));
+
         sendConfigMessage(player, "messages.warp_created");
     }
 
@@ -943,6 +977,13 @@ public class EventListener implements Listener {
             return "未知世界";
         }
 
+        // 從配置檔案讀取世界名稱對映
+        String displayName = config.getString("world-display-names." + worldName);
+        if (displayName != null) {
+            return displayName;
+        }
+
+        // 如果配置檔案中沒有對應的世界名稱，使用預設邏輯
         if (worldName.equals("world") || worldName.endsWith("_overworld")) {
             return "主世界";
         } else if (worldName.equals("world_nether") || worldName.endsWith("_nether")) {

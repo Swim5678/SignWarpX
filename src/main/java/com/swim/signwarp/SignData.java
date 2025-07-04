@@ -12,7 +12,7 @@ public class SignData {
     static final String SMALL_SHORT_HEADER_WARP = "[wp]";
     static final String SMALL_SHORT_HEADER_TARGET_WARP = "[wpt]";
     final String warpName;
-    private final String header;
+    public final String header;
 
     // 原有的構造方法（用於向後兼容）
     SignData(String[] lines) {
