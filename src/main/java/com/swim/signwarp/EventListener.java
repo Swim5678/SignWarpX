@@ -354,7 +354,7 @@ public class EventListener implements Listener {
             event.setCancelled(true);
             return;
         }
-
+        event.line(0, Component.text(SignData.HEADER_WARP).color(NamedTextColor.BLUE));
         // 檢查是否啟用世界資訊顯示
         boolean showWorldInfo = config.getBoolean("sign-world-info.enabled", true);
         if (showWorldInfo) {
@@ -380,9 +380,6 @@ public class EventListener implements Listener {
             // 設置告示牌第三行為世界資訊
             event.line(2, Component.text(worldInfo).color(color));
         }
-
-        // 設置告示牌第一行顏色
-        event.line(0, Component.text(signData.header).color(NamedTextColor.DARK_BLUE));
 
         sendConfigMessage(player, "messages.warp_created");
     }
