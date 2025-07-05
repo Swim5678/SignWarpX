@@ -96,7 +96,7 @@ messages:
   not_your_warp: "<red>You can only invite players to your own warps!"
   invite_usage: "<red>Usage: /wp invite <player> <warp name>"
   uninvite_usage: "<red>Usage: /wp uninvite <player> <warp name>"
-  already_invited: "<red>Player {player} has already been invited to this warp!"
+  already_invited: "<yellow>Player {player} has already been invited to this warp!"
   not_invited: "<red>Player {player} is not invited to this warp."
   invite_list: "<green>Invite list for warp '{warp-name}':"
   no_invites: "<yellow>No players have been invited to this warp yet."
