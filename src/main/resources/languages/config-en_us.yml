@@ -1,0 +1,159 @@
+# Multilingual Configuration Instructions
+# All language config files are stored in the languages folder.
+# To switch languages, copy (or move) the desired language file to the plugin main directory and rename it to config.yml (overwrite the original file).
+# Example: Copy languages/config-en.yml as config.yml to switch to English interface.
+
+# Item required when using teleport signs (set to none if not required)
+use-item: ENDER_PEARL
+# Amount of items consumed when using teleport signs
+use-cost: 1
+# Waiting time before teleportation (in seconds)
+teleport-delay: 5
+# Cooldown after teleportation completion (in seconds)
+teleport-use-cooldown: 10
+# Leash related settings
+max-leash-depth: 5 # Maximum leash depth (prevent excessive leash chains)
+
+# Cross-dimension teleportation settings
+cross-dimension-teleport:
+  # Whether to allow cross-dimension teleportation (true: allow, false: disable)
+  enabled: true
+  # Whether OP can bypass cross-dimension restrictions (true: allow, false: disable)
+  op-bypass: true
+
+# Enable visual effects during teleportation
+visual-effects-enabled: true
+
+# Web configuration
+web:
+  enabled: true #(true: allow, false: disable)
+  port: 8080 #Change this item and also change the ports of this.wsUrl and this.apiUrl in app.js
+
+###############################################################################
+# The following settings only affect group functionality related configurations
+###############################################################################
+warp-groups:
+  # Whether to enable warp group functionality (true: enable, false: disable)
+  enabled: true
+  # Maximum number of groups each player can create (OP is not limited by this)
+  max-groups-per-player: 5
+  # Maximum number of warp anchors each group can contain (OP is not limited by this)
+  max-warps-per-group: 10
+  # Maximum number of members each group can invite (OP is not limited by this)
+  max-members-per-group: 20
+  # Whether to allow normal players to use group functionality (true: allow, false: OP only)
+  allow-normal-players: true
+
+###############################################################################
+# The following settings only affect creating Warp (WP) signs
+###############################################################################
+# Teleport sign world information display settings
+sign-world-info:
+  enabled: true
+  format: "§7World: §f{world-name}"
+# World name display configuration
+world-display-names:
+  world: "Overworld"
+  world_nether: "Nether"
+  world_the_end: "The End"
+###############################################################################
+# The following settings only affect Warp Target (WPT) teleport anchor sign functionality
+###############################################################################
+# Item required when creating WPT signs (set to none if not required)
+create-wpt-item: DIAMOND
+# Amount of items consumed when creating WPT signs
+create-wpt-item-cost: 1
+# Maximum number of WPT teleport anchors each player can create (-1 means unlimited)
+max-warps-per-player: 10
+# Whether OP is not limited by WPT teleport anchor quantity (true means OP has no limit)
+op-unlimited-warps: true
+# Default visibility of WPT teleport anchors (true for private, false for public)
+default-visibility: false
+# Whether to show creator information on WPT signs (true to show, false to hide)
+show-creator-on-sign: true
+
+###############################################################################
+# Custom Messages
+###############################################################################
+messages:
+  # General messages
+  reload_success: "<green>Configuration reloaded"
+  not_permission: "<red>Insufficient permissions!"
+  player_not_found: "<red>Player '{player}' not found or offline!"
+  player_not_online: "<red>Player '{player}' is currently not online! Please wait for the player to come online before proceeding."
+  invalid_item: "<red>You must use {use-item} to enable this teleportation!"
+  not_enough_item: "<red>You don't have enough {use-item} x{use-cost} to create this warp anchor."
+  cooldown: "<red>You must wait {cooldown} seconds before teleporting again."
+  warp_not_found: "<red>The specified warp anchor does not exist!"
+  warp_world_not_found: "<red>The world containing the warp anchor does not exist or is not loaded! Please contact an administrator."
+  cannot_teleport_on_boat: "<yellow>Players on boats cannot teleport!"
+  leash_depth_warning: "<yellow>⚠ Warning: Your leash chain has reached the maximum depth limit of {max-depth} levels! Some entities cannot teleport together"
+  leash_restore_failed_distance: "<yellow>⚠ Some leashed entities were too far away to restore connections after teleportation."
+
+  # Warp anchor related
+  create_permission: "<red>You don't have permission to create warp anchors!"
+  no_warp_name: "<red>Warp anchor name not set!\nPlease set the warp anchor name on the second line."
+  warp_created: "<green>Teleport sign successfully created."
+  warp_name_taken: "<red>A warp anchor with the same name already exists!"
+  warp_destroyed: "<green>Warp anchor has been destroyed."
+  target_sign_created: "<green>Warp anchor successfully created."
+  destroy_permission: "<red>You don't have permission to destroy warp anchors!"
+  use_permission: "<red>You don't have permission to use this teleport sign!"
+  teleport: "<yellow>Teleporting to {warp-name}, arriving in {time} seconds..."
+  teleport-success: "<green>Successfully teleported to {warp-name}."
+  teleport-cancelled: "<red>Teleportation cancelled."
+  warp_visibility_changed: "<green>Warp anchor {warp-name} usage permission has been changed to {visibility}."
+  cant_modify_others_warp: "<red>You can only modify warp anchors you created!"
+  set_visibility_usage: "<red>Usage: /wp set <public|private> <warp anchor name>"
+  invalid_visibility: "<red>Usage permission must be 'public' or 'private'"
+  private_warp: "<red>Insufficient permissions."
+  warp_limit_reached: "<red>You have reached the maximum warp anchor creation limit ({current}/{max})!"
+  my_warps_header: "<green>=== Warp anchors owned by {player} ==="
+  no_warps_owned: "<gray>{player} currently doesn't own any warp anchors."
+  warp_list_format: "<white>{index}. <aqua>{warp-name} <gray>({visibility}) - <yellow>{world} <gray>({x}, {y}, {z})"
+  total_warps: "<green>{player} owns a total of {count} warp anchors"
+  not_permission_view_others: "<red>Insufficient permissions!"
+  player_not_found_or_no_warps: "<red>Player '{player}' not found or has no warp anchors."
+  creator-display-format: "<gray>Creator: <white>{creator}"
+  cross_dimension_disabled: "<red>Cross-dimension teleportation is disabled! You cannot teleport to a warp anchor located in the <yellow>{target-world} <red>world."
+
+  # Warp anchor invitations
+  invite_success: "<green>Successfully invited {player} to use warp anchor '{warp-name}'!"
+  invite_received: "<green>{inviter} invited you to use warp anchor '{warp-name}'!"
+  uninvite_success: "<green>Removed {player}'s permission to use warp anchor '{warp-name}'."
+  not_your_warp: "<red>You can only invite players to use your own warp anchors!"
+  invite_usage: "<red>Usage: /wp invite <player> <warp anchor name>"
+  uninvite_usage: "<red>Usage: /wp uninvite <player> <warp anchor name>"
+  already_invited: "<yellow>Player {player} has already been invited to use this warp anchor!"
+  not_invited: "<red>Player {player} has not been invited to use this warp anchor."
+  invite_list: "<green>Invitation list for warp anchor '{warp-name}':"
+  no_invites: "<yellow>This warp anchor has not invited any players yet."
+  cant_modify_warp: "<red>You cannot modify the invitation list for this warp anchor!"
+  # Group functionality
+  group_created: "<green>Successfully created group '{group-name}'!"
+  group_deleted: "<green>Group '{group-name}' has been deleted."
+  warp_added_to_group: "<green>Warp anchor '{warp-name}' has been added to group '{group-name}'."
+  warp_removed_from_group: "<green>Warp anchor '{warp-name}' has been removed from group '{group-name}'."
+  player_invited_to_group: "<green>Player '{player}' has been invited to join group '{group-name}'."
+  player_removed_from_group: "<green>Player '{player}' has been removed from group '{group-name}'."
+  group_not_found: "<red>Group '{group-name}' not found."
+  not_group_owner: "<red>You don't have permission to manage this group!"
+  warp_not_private: "<red>Only private warp anchors can be added to groups!"
+  warp_already_in_group: "<red>Warp anchor '{warp-name}' is already in group '{existing-group}'."
+  max_groups_reached: "<red>You have reached the group creation limit ({max})!"
+  group_feature_disabled: "<red>Group functionality is currently disabled!"
+  group_feature_no_permission: "<red>You don't have permission to use group functionality!"
+  group_help_header: "<green>=== SignWarp Group Command Help ==="
+  group_help_create: "<aqua>/wp group create <group name> <gray>- Create a new group"
+  group_help_list: "<aqua>/wp group list <gray>- View your group list"
+  group_help_info: "<aqua>/wp group info <group name> <gray>- View detailed group information"
+  group_help_add: "<aqua>/wp group add <group name> <warp anchor> <gray>- Add warp anchor to group"
+  group_help_remove: "<aqua>/wp group remove <group name> <warp anchor> <gray>- Remove warp anchor from group"
+  group_help_invite: "<aqua>/wp group invite <group name> <player> <gray>- Invite player to join group"
+  group_help_uninvite: "<aqua>/wp group uninvite <group name> <player> <gray>- Remove group member"
+  group_help_delete: "<aqua>/wp group delete <group name> <gray>- Delete group"
+
+  # Teleport commands
+  tp_op_only: "<red>Insufficient permissions"
+  tp_usage: "<yellow>Usage: /signwarp tp <warp anchor name>"
+  tp_success: "<green>Teleported to: {warp-name} (Creator: {creator})"

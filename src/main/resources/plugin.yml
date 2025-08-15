@@ -1,0 +1,72 @@
+name: SignWarpX
+version: '${project.version}'
+description: 一個基於告示牌的傳送點插件，支援私人與公共傳送點功能，MADE BY SWIM
+author: Swim
+api-version: '1.21.6'
+main: com.swim.signwarpx.SignWarpX
+commands:
+  signwarp:
+    description: "管理傳送點系統的指令"
+    usage: |
+      /wp set <公共|私人> <傳送點名稱> - 設定傳送點的可見性
+      /wp invite <玩家> <傳送點名稱> - 邀請玩家使用私人傳送點
+      /wp uninvite <玩家> <傳送點名稱> - 移除玩家的傳送點使用權限
+      /wp list-invites <傳送點名稱> - 查看傳送點的邀請列表
+      /wp tp <傳送點名稱> - OP 專用，快速傳送到指定傳送點
+    aliases: ["wp"]
+permissions:
+  signwarp.*:
+    children:
+      - signwarp.create
+      - signwarp.use
+      - signwarp.destroy
+      - signwarp.admin
+      - signwarp.reload
+      - signwarp.private.use
+      - signwarp.private.set
+      - signwarp.invite
+      - signwarp.invite.list
+      - signwarp.invite.admin
+      - signwarp.wpt
+  signwarp.create:
+    description: "允許創建傳送點告示牌"
+    default: true
+  signwarp.use:
+    description: "允許使用傳送點"
+    default: true
+  signwarp.reload:
+    description: "允許重新載入插件配置"
+    default: op
+  signwarp.admin:
+    description: "允許使用管理介面和修改任何傳送點"
+    default: op
+  signwarp.destroy:
+    description: "允許破壞傳送點告示牌"
+    default: op
+  signwarp.private.use:
+    description: "允許使用其他玩家的私人傳送點"
+    default: op
+  signwarp.private.set:
+    description: "允許設定傳送點為公共或私人"
+    default: true
+  signwarp.invite:
+    description: "允許邀請其他玩家使用自己的私人傳送點"
+    default: true
+  signwarp.invite.list:
+    description: "允許查看傳送點的邀請列表"
+    default: true
+  signwarp.invite.admin:
+    description: "允許管理任何傳送點的邀請列表"
+    default: op
+  signwarp.tp:
+    description: "允許使用 /wp wpt 指令（OP 專用）"
+    default: op
+  signwarp.group.create:
+    description: 建立群組
+    default: true
+  signwarp.group.manage:
+    description: 管理群組（新增/移除傳送點和成員）
+    default: true
+  signwarp.group.admin:
+    description: 管理任何群組（管理員權限）
+    default: op
