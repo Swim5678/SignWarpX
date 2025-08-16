@@ -1,5 +1,6 @@
 package com.swim.signwarpx;
 
+import com.swim.signwarpx.utils.WarpInviteUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -379,15 +380,15 @@ public class Warp {
     }
 
     // 新增獲取被邀請玩家列表的方法
-    public List<WarpInvite> getInvitedPlayers() {
-        List<WarpInvite> invites = new ArrayList<>();
+    public List<WarpInviteUtils> getInvitedPlayers() {
+        List<WarpInviteUtils> invites = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String sql = "SELECT * FROM warp_invites WHERE warp_name = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, this.warpName);
                 ResultSet rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    invites.add(new WarpInvite(
+                    invites.add(new WarpInviteUtils(
                             rs.getString("warp_name"),
                             rs.getString("invited_uuid"),
                             rs.getString("invited_name"),

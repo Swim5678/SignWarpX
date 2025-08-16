@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.swim.signwarpx.SignWarpX;
 import com.swim.signwarpx.TeleportHistory;
 import com.swim.signwarpx.Warp;
-import com.swim.signwarpx.WarpInvite;
+import com.swim.signwarpx.utils.WarpInviteUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import spark.Spark;
@@ -686,8 +686,8 @@ public class WebApiManager {
                     playerUuid = onlinePlayer.getUniqueId().toString();
                 } else {
                     // 如果玩家離線，從邀請列表中查找 UUID
-                    List<WarpInvite> invites = warp.getInvitedPlayers();
-                    for (WarpInvite invite : invites) {
+                    List<WarpInviteUtils> invites = warp.getInvitedPlayers();
+                    for (WarpInviteUtils invite : invites) {
                         if (invite.invitedName().equals(playerName)) {
                             playerUuid = invite.invitedUuid();
                             break;
@@ -744,9 +744,9 @@ public class WebApiManager {
                     return gson.toJson(Map.of("error", "只有私人傳送錨點才有邀請列表"));
                 }
 
-                List<WarpInvite> invites = warp.getInvitedPlayers();
+                List<WarpInviteUtils> invites = warp.getInvitedPlayers();
                 List<String> invitedPlayerNames = invites.stream()
-                        .map(WarpInvite::invitedName)
+                        .map(WarpInviteUtils::invitedName)
                         .toList();
 
                 Map<String, Object> response = new HashMap<>();
@@ -830,9 +830,9 @@ public class WebApiManager {
 
         // 獲取邀請玩家列表
         if (warp.isPrivate()) {
-            List<WarpInvite> invites = warp.getInvitedPlayers();
+            List<WarpInviteUtils> invites = warp.getInvitedPlayers();
             dto.invitedPlayers = invites.stream()
-                    .map(WarpInvite::invitedName)
+                    .map(WarpInviteUtils::invitedName)
                     .toList();
         } else {
             dto.invitedPlayers = new ArrayList<>();
@@ -897,7 +897,7 @@ public class WebApiManager {
     public WebSocketHandler getWebSocketHandler() {
         return webSocketHandler;
     }
-    
+
     // 獲取當前端口
     public int getCurrentPort() {
         return this.port;

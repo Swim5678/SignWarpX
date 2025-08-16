@@ -1,10 +1,14 @@
 package com.swim.signwarpx;
 
-import com.swim.signwarpx.utils.SignUtils;
+import com.swim.signwarpx.utils.*;
+import com.swim.signwarpx.utils.EventListener.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
@@ -30,22 +34,16 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings({"BooleanMethodIsAlwaysInverted", "ConstantValue", "unused"})
+//@SuppressWarnings({"BooleanMethodIsAlwaysInverted", "ConstantValue", "unused"})
 public class EventListener implements Listener {
     private static FileConfiguration config;
     private final SignWarpX plugin;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final TeleportEffects teleportEffects;
 
-    // 儲存傳送任務（排程）
-    private final ConcurrentHashMap<UUID, BukkitTask> teleportTasks = new ConcurrentHashMap<>();
-    // 暫存扣除的物品數量（用於傳送取消時返還）
-    private final ConcurrentHashMap<UUID, Integer> pendingItemCosts = new ConcurrentHashMap<>();
-    // 傳送冷卻：記錄玩家下次可傳送的時間（毫秒）
-    private final ConcurrentHashMap<UUID, Long> cooldowns = new ConcurrentHashMap<>();
+    // 注意：傳送任務、物品成本和冷卻現在由 utils 類別管理
 
     public EventListener(SignWarpX plugin) {
         this.plugin = plugin;
@@ -73,99 +71,35 @@ public class EventListener implements Listener {
 
     // ============= 共用方法區域 =============
 
-    private boolean hasPermission(Player player, PermissionType type) {
-        if (player.hasPermission(type.permission)) {
-            return true;
-        }
-
-        if (type.messageKey != null) {
-            sendConfigMessage(player, type.messageKey);
-        }
-        return false;
+    private boolean hasPermission(Player player, PermissionUtils.PermissionType type) {
+        return PermissionUtils.hasPermission(player, config, type);
     }
 
     /**
-     * 統一的配置訊息發送方法
+     * 統一的配置訊息發送方法 - 現在使用 MessageUtils
      */
     private void sendConfigMessage(Player player, String messageKey) {
-        sendConfigMessage(player, messageKey, null);
+        MessageUtils.sendConfigMessage(player, config, messageKey);
     }
 
     private void sendConfigMessage(Player player, String messageKey, Map<String, String> placeholders) {
-        String message = config.getString(messageKey);
-        if (message != null) {
-            if (placeholders != null) {
-                for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-                    message = message.replace(entry.getKey(), entry.getValue());
-                }
-            }
-            player.sendMessage(miniMessage.deserialize(message));
-        }
+        MessageUtils.sendConfigMessage(player, config, messageKey, placeholders);
     }
 
     /**
-     * 統一的物品返還方法
+     * 統一的物品返還方法 - 現在使用 ItemUtils
      */
     private void returnPendingItems(Player player) {
-        UUID playerUUID = player.getUniqueId();
-        if (pendingItemCosts.containsKey(playerUUID)) {
-            String useItem = config.getString("use-item", "none");
-            if (!"none".equalsIgnoreCase(useItem)) {
-                Material material = Material.getMaterial(useItem.toUpperCase());
-                if (material != null) {
-                    int cost = pendingItemCosts.get(playerUUID);
-                    player.getInventory().addItem(new ItemStack(material, cost));
-                }
-            }
-            pendingItemCosts.remove(playerUUID);
-        }
+        ItemUtils.returnPendingItems(player, config);
     }
 
     /**
-     * 統一的傳送任務取消方法
+     * 統一的傳送任務取消方法 - 現在使用 TeleportUtils
      */
     private void cancelTeleportTask(Player player, String messageKey) {
-        UUID playerUUID = player.getUniqueId();
-        BukkitTask teleportTask = teleportTasks.get(playerUUID);
-        if (teleportTask != null && !teleportTask.isCancelled()) {
-            teleportTask.cancel();
-            teleportTasks.remove(playerUUID);
-            returnPendingItems(player);
-
-            // 取消傳送特效（會立即清空 Action Bar）
-            teleportEffects.cancelTeleportEffects(player);
-
-            sendConfigMessage(player, messageKey);
-        }
-    }
-
-    /**
-     * 統一的傳送權限檢查方法
-     */
-    private boolean canUseWarp(Player player, Warp warp) {
-        // 管理員可以使用所有傳送點
-        if (hasPermission(player, PermissionType.ADMIN)) {
-            return true;
-        }
-
-        // 創建者可以使用自己的傳送點
-        if (player.getUniqueId().toString().equals(warp.getCreatorUuid())) {
-            return true;
-        }
-
-        // 如果是公共傳送點，任何人都可以使用
-        if (!warp.isPrivate()) {
-            return true;
-        }
-
-        // 使用 Warp 類別的完整權限檢查方法（包含群組成員檢查）
-        if (warp.canUseWarp(player.getUniqueId().toString())) {
-            return true;
-        }
-
-        // 發送私人傳送點錯誤訊息
-        sendConfigMessage(player, "messages.private_warp");
-        return false;
+        TeleportUtils.cancelTeleportTask(player, plugin, messageKey);
+        // 取消傳送特效（會立即清空 Action Bar）
+        teleportEffects.cancelTeleportEffects(player);
     }
 
     /**
@@ -185,70 +119,27 @@ public class EventListener implements Listener {
     }
 
     /**
-     * 統一的WPT物品檢查與扣除方法
+     * 統一的WPT物品檢查與扣除方法 - 現在使用 ItemUtils
      */
     private boolean checkAndConsumeItem(Player player) {
-        String itemName = config.getString("create-wpt-item", "none");
-        if ("none".equalsIgnoreCase(itemName)) {
-            return true; // 不需要物品
-        }
-
-        Material material = Material.getMaterial(itemName.toUpperCase());
-
-        int cost = config.getInt("create-wpt-item-cost", 1);
-        ItemStack itemInHand = player.getInventory().getItemInMainHand();
-
-        if (itemInHand.getType() != material) {
-            Map<String, String> placeholders = Map.of(
-                    "{use-item}", itemName,
-                    "{use-cost}", String.valueOf(cost)
-            );
-            sendConfigMessage(player, "messages.not_enough_item", placeholders);
-            return false;
-        }
-
-        if (itemInHand.getAmount() < cost) {
-            Map<String, String> placeholders = Map.of(
-                    "{use-item}", itemName,
-                    "{use-cost}", String.valueOf(cost)
-            );
-            sendConfigMessage(player, "messages.not_enough_item", placeholders);
-            return false;
-        }
-
-        // 扣除物品
-        int remaining = itemInHand.getAmount() - cost;
-        if (remaining <= 0) {
-            player.getInventory().setItemInMainHand(null);
-        } else {
-            itemInHand.setAmount(remaining);
-            player.getInventory().setItemInMainHand(itemInHand);
-        }
-
-        // 記錄扣除數量（用於傳送取消時返還）- 修正此處
-        pendingItemCosts.put(player.getUniqueId(), cost);
-
-        return true;
+        return ItemUtils.checkAndConsumeCreateItem(player, config);
     }
 
     /**
-     * 統一的冷卻檢查方法
+     * 統一的冷卻檢查方法 - 現在使用 CooldownUtils
      */
     private boolean checkCooldown(Player player) {
-        UUID playerId = player.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        if (cooldowns.containsKey(playerId)) {
-            long cooldownEnd = cooldowns.get(playerId);
-            if (now < cooldownEnd) {
-                long remainingSeconds = (cooldownEnd - now + 999) / 1000;
-                Map<String, String> placeholders = Map.of("{cooldown}", String.valueOf(remainingSeconds));
-                sendConfigMessage(player, "messages.cooldown", placeholders);
-                return false;
-            }
-        }
-        return true;
+        return CooldownUtils.checkCooldown(player, config);
     }
+
+    /**
+     * 統一的傳送權限檢查方法 - 現在使用 WarpPermissionUtils
+     */
+    private boolean canUseWarp(Player player, Warp warp) {
+        return WarpPermissionUtils.canUseWarp(player, config, warp);
+    }
+
+    // PermissionType 枚舉已移至 PermissionUtils.PermissionType
 
     @EventHandler
     public void onPluginEnable(PluginEnableEvent event) {
@@ -256,25 +147,11 @@ public class EventListener implements Listener {
     }
 
     private void startCooldownCleanupTask() {
-        plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            long now = System.currentTimeMillis();
-            cooldowns.values().removeIf(cooldownEnd -> cooldownEnd <= now);
-        }, 6000L, 6000L);
+        plugin.getServer().getScheduler().runTaskTimer(plugin, CooldownUtils::cleanupExpiredCooldowns, 6000L, 6000L);
     }
 
     private boolean canCreateWarp(Player player) {
-        int maxWarps = config.getInt("max-warps-per-player", 10);
-        if (maxWarps == -1) {
-            return true;
-        }
-
-        boolean opUnlimited = config.getBoolean("op-unlimited-warps", true);
-        if (opUnlimited && player.isOp()) {
-            return true;
-        }
-
-        int currentWarps = Warp.getPlayerWarpCount(player.getUniqueId().toString());
-        return currentWarps < maxWarps;
+        return WarpPermissionUtils.canCreateWarp(player, config);
     }
 
     @EventHandler
@@ -302,7 +179,7 @@ public class EventListener implements Listener {
         }
 
         // 統一權限檢查
-        if (!hasPermission(player, PermissionType.CREATE)) {
+        if (!hasPermission(player, PermissionUtils.PermissionType.CREATE)) {
             event.setCancelled(true);
             return;
         }
@@ -350,7 +227,7 @@ public class EventListener implements Listener {
         if (showWorldInfo) {
             // 獲取目標世界名稱
             String worldName = existingWarp.getLocation().getWorld().getName();
-            String displayWorldName = getDisplayWorldName(worldName);
+            String displayWorldName = WorldUtils.getDisplayWorldName(config, worldName);
 
             // 獲取顯示格式和顏色
             String format = config.getString("sign-world-info.format", "世界: {world-name}");
@@ -445,7 +322,7 @@ public class EventListener implements Listener {
         }
 
         // 權限檢查
-        boolean hasPermission = hasPermission(player, PermissionType.DESTROY) ||
+        boolean hasPermission = hasPermission(player, PermissionUtils.PermissionType.DESTROY) ||
                 player.getUniqueId().toString().equals(warp.getCreatorUuid());
 
         if (!hasPermission) {
@@ -505,12 +382,12 @@ public class EventListener implements Listener {
         }
 
         // 檢查使用權限
-        if (!hasPermission(player, PermissionType.USE)) {
+        if (!hasPermission(player, PermissionUtils.PermissionType.USE)) {
             return;
         }
 
         // 檢查是否已在傳送中
-        if (teleportTasks.containsKey(playerId)) {
+        if (TeleportUtils.hasTeleportTask(playerId)) {
             return;
         }
 
@@ -521,35 +398,8 @@ public class EventListener implements Listener {
         }
 
         // 檢查並扣除使用物品
-        String useItem = config.getString("use-item", "none");
-        if (!"none".equalsIgnoreCase(useItem)) {
-            Material requiredMaterial = Material.getMaterial(useItem.toUpperCase());
-
-            if (handItem == null || handItem.getType() != requiredMaterial) {
-                Map<String, String> placeholders = Map.of("{use-item}", useItem);
-                sendConfigMessage(player, "messages.invalid_item", placeholders);
-                return;
-            }
-
-            int useCost = config.getInt("use-cost", 0);
-            if (handItem.getAmount() < useCost) {
-                Map<String, String> placeholders = Map.of(
-                        "{use-cost}", String.valueOf(useCost),
-                        "{use-item}", useItem
-                );
-                sendConfigMessage(player, "messages.not_enough_item", placeholders);
-                return;
-            }
-
-            // 扣除物品
-            int remaining = handItem.getAmount() - useCost;
-            if (remaining <= 0) {
-                player.getInventory().setItemInMainHand(null);
-            } else {
-                handItem.setAmount(remaining);
-                player.getInventory().setItemInMainHand(handItem);
-            }
-            pendingItemCosts.put(playerId, useCost);
+        if (!ItemUtils.checkAndConsumeUseItem(player, config, handItem)) {
+            return;
         }
 
         teleportPlayer(player, warpName);
@@ -570,7 +420,15 @@ public class EventListener implements Listener {
         }
 
         // 檢查跨次元傳送限制
-        if (!canCrossDimensionTeleport(player, warp)) {
+        if (!WorldUtils.canCrossDimensionTeleport(config, player.getWorld(), warp.getLocation().getWorld(), player.isOp())) {
+            if (warp.getLocation().getWorld() == null) {
+                sendConfigMessage(player, WorldUtils.getWorldNotFoundMessageKey());
+            } else {
+                String targetWorldName = WorldUtils.getDisplayWorldName(config, warp.getLocation().getWorld().getName());
+                Map<String, String> placeholders = Map.of("{target-world}", targetWorldName);
+                sendConfigMessage(player, WorldUtils.getCrossDimensionDisabledMessageKey(), placeholders);
+            }
+            returnPendingItems(player);
             return;
         }
 
@@ -590,12 +448,6 @@ public class EventListener implements Listener {
     private void scheduleTeleportTask(Player player, Warp warp, int delay) {
         UUID playerUUID = player.getUniqueId();
 
-        // 取消之前的傳送任務
-        BukkitTask previousTask = teleportTasks.get(playerUUID);
-        if (previousTask != null) {
-            previousTask.cancel();
-        }
-
         // 準備傳送相關實體
         Collection<Entity> leashedEntities = collectLeashedEntities(player);
         Entity playerVehicle = player.getVehicle();
@@ -604,7 +456,7 @@ public class EventListener implements Listener {
         // 排程傳送任務
         BukkitTask teleportTask = Bukkit.getScheduler().runTaskLater(plugin, () -> executeTeleport(player, warp, playerVehicle, nearestBoat, leashedEntities), delay * 20L);
 
-        teleportTasks.put(playerUUID, teleportTask);
+        TeleportUtils.addTeleportTask(playerUUID, teleportTask);
     }
 
     /**
@@ -777,33 +629,11 @@ public class EventListener implements Listener {
         return nearestBoat;
     }
 
-    private Location findSafeLocation(Location base) {
-        World world = base.getWorld();
-        int x = base.getBlockX();
-        int z = base.getBlockZ();
-        int startY = base.getBlockY();
-        int maxY = world.getMaxHeight();
-
-        // 從目標位置向上尋找空氣方塊，腳下必須是實體方塊
-        for (int y = startY; y < maxY - 1; y++) {
-            Location loc = new Location(world, x + 0.5, y, z + 0.5);
-            Location feet = new Location(world, x, y, z);
-            Location head = new Location(world, x, y + 1, z);
-
-            if (world.getBlockAt(feet).getType().isAir() && world.getBlockAt(head).getType().isAir()) {
-                Location below = new Location(world, x, y - 1, z);
-                if (!world.getBlockAt(below).getType().isAir()) {
-                    return loc;
-                }
-            }
-        }
-        // 如果找不到安全空間，返回原始位置
-        return base;
-    }
+    // findSafeLocation 方法已移至 TeleportUtils.findSafeLocation
 
     private void executeTeleport(Player player, Warp warp, Entity playerVehicle,
                                  Boat nearestBoat, Collection<Entity> leashedEntities) {
-        Location targetLocation = findSafeLocation(warp.getLocation());
+        Location targetLocation = TeleportUtils.findSafeLocation(warp.getLocation());
         UUID playerUUID = player.getUniqueId();
 
         // 在傳送前記錄來源世界名稱，避免傳送後獲取錯誤的世界
@@ -819,13 +649,11 @@ public class EventListener implements Listener {
             for (Entity entity : leashedEntities) {
                 if (entity instanceof LivingEntity livingEntity && livingEntity.isLeashed()) {
                     Entity leashHolder = livingEntity.getLeashHolder();
-                    if (leashHolder != null) {
-                        // 記錄牽繩關係
-                        leashConnections.put(entity, leashHolder);
+                    // 記錄牽繩關係
+                    leashConnections.put(entity, leashHolder);
 
-                        // 暫時移除牽繩連接（避免掉落牽繩物品）
-                        livingEntity.setLeashHolder(null);
-                    }
+                    // 暫時移除牽繩連接（避免掉落牽繩物品）
+                    livingEntity.setLeashHolder(null);
                 }
             }
 
@@ -932,83 +760,26 @@ public class EventListener implements Listener {
         sendConfigMessage(player, "messages.teleport-success", placeholders);
 
         // 清除扣除物品記錄
-        pendingItemCosts.remove(playerUUID);
+        ItemUtils.clearPendingItems(playerUUID);
 
         // 設定冷卻
-        int useCooldown = config.getInt("teleport-use-cooldown", 5);
-        cooldowns.put(playerUUID, System.currentTimeMillis() + useCooldown * 1000L);
+        CooldownUtils.setCooldown(player, config, "teleport-use-cooldown");
 
         // 清除傳送任務記錄
-        teleportTasks.remove(playerUUID);
+        TeleportUtils.removeTeleportTask(playerUUID);
     }
 
-    private boolean canCrossDimensionTeleport(Player player, Warp warp) {
-        World playerWorld = player.getWorld();
-        World warpWorld = warp.getLocation().getWorld();
+    // canCrossDimensionTeleport 方法已移至 WorldUtils.canCrossDimensionTeleport
 
-        if (warpWorld == null) {
-            sendConfigMessage(player, "messages.warp_world_not_found");
-            returnPendingItems(player);
-            return false;
-        }
-
-        if (!isDifferentWorld(playerWorld, warpWorld)) {
-            return true;
-        }
-
-        boolean crossDimensionEnabled = config.getBoolean("cross-dimension-teleport.enabled", true);
-        if (!crossDimensionEnabled) {
-            boolean opBypass = config.getBoolean("cross-dimension-teleport.op-bypass", true);
-            if (opBypass && player.isOp()) {
-                return true;
-            }
-
-            String targetWorldName = getDisplayWorldName(warpWorld.getName());
-            Map<String, String> placeholders = Map.of("{target-world}", targetWorldName);
-            sendConfigMessage(player, "messages.cross_dimension_disabled", placeholders);
-            returnPendingItems(player);
-            return false;
-        }
-
-        return true;
-    }
-
-    private String getDisplayWorldName(String worldName) {
-        if (worldName == null) {
-            return "未知世界";
-        }
-
-        // 從配置檔案讀取世界名稱對映
-        String displayName = config.getString("world-display-names." + worldName);
-        if (displayName != null) {
-            return displayName;
-        }
-
-        // 如果配置檔案中沒有對應的世界名稱，使用預設邏輯
-        if (worldName.equals("world") || worldName.endsWith("_overworld")) {
-            return "主世界";
-        } else if (worldName.equals("world_nether") || worldName.endsWith("_nether")) {
-            return "地獄";
-        } else if (worldName.equals("world_the_end") || worldName.endsWith("_the_end")) {
-            return "終界";
-        }
-
-        return worldName;
-    }
-
-    private boolean isDifferentWorld(World world1, World world2) {
-        if (world1 == null || world2 == null) {
-            return true;
-        }
-        return !world1.equals(world2);
-    }
+    // getDisplayWorldName 方法已移至 WorldUtils.getDisplayWorldName
+    // isDifferentWorld 方法已移至 WorldUtils.isDifferentWorld
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         UUID playerUUID = player.getUniqueId();
 
-        if (teleportTasks.containsKey(playerUUID)) {
+        if (TeleportUtils.hasTeleportTask(playerUUID)) {
             Location from = event.getFrom();
             Location to = event.getTo();
 
@@ -1020,20 +791,10 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        UUID playerId = event.getPlayer().getUniqueId();
         Player player = event.getPlayer();
 
-        if (teleportTasks.containsKey(playerId)) {
-            BukkitTask task = teleportTasks.get(playerId);
-            if (task != null && !task.isCancelled()) {
-                task.cancel();
-            }
-            teleportTasks.remove(playerId);
-            returnPendingItems(player);
-        }
-
-        pendingItemCosts.remove(playerId);
-        cooldowns.remove(playerId);
+        // 使用 TeleportUtils 統一清理玩家數據
+        TeleportUtils.cleanupPlayer(player, plugin);
 
         // 清理特效
         teleportEffects.cleanupPlayer(player);
@@ -1130,23 +891,5 @@ public class EventListener implements Listener {
         }
         SignData signData = new SignData(lines);
         return signData.isWarpSign();
-    }
-
-    /**
-     * 統一的權限檢查方法
-     */
-    private enum PermissionType {
-        CREATE("signwarp.create", "messages.create_permission"),
-        USE("signwarp.use", "messages.use_permission"),
-        DESTROY("signwarp.destroy", "messages.destroy_permission"),
-        ADMIN("signwarp.admin", null);
-
-        private final String permission;
-        private final String messageKey;
-
-        PermissionType(String permission, String messageKey) {
-            this.permission = permission;
-            this.messageKey = messageKey;
-        }
     }
 }

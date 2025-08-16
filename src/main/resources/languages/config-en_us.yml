@@ -26,7 +26,7 @@ visual-effects-enabled: true
 
 # Web configuration
 web:
-  enabled: true #(true: allow, false: disable)
+  enabled: false #(true: allow, false: disable)
   port: 8080 #Change this item and also change the ports of this.wsUrl and this.apiUrl in app.js
 
 ###############################################################################
@@ -37,7 +37,7 @@ warp-groups:
   enabled: true
   # Maximum number of groups each player can create (OP is not limited by this)
   max-groups-per-player: 5
-  # Maximum number of warp anchors each group can contain (OP is not limited by this)
+  # Maximum number of warps each group can contain (OP is not limited by this)
   max-warps-per-group: 10
   # Maximum number of members each group can invite (OP is not limited by this)
   max-members-per-group: 20
@@ -82,53 +82,59 @@ messages:
   player_not_found: "<red>Player '{player}' not found or offline!"
   player_not_online: "<red>Player '{player}' is currently not online! Please wait for the player to come online before proceeding."
   invalid_item: "<red>You must use {use-item} to enable this teleportation!"
-  not_enough_item: "<red>You don't have enough {use-item} x{use-cost} to create this warp anchor."
+  not_enough_item: "<red>You don't have enough {use-item} x{use-cost} to create this warp."
   cooldown: "<red>You must wait {cooldown} seconds before teleporting again."
-  warp_not_found: "<red>The specified warp anchor does not exist!"
-  warp_world_not_found: "<red>The world containing the warp anchor does not exist or is not loaded! Please contact an administrator."
+  warp_not_found: "<red>The specified warp does not exist!"
+  warp_world_not_found: "<red>The world containing the warp does not exist or is not loaded! Please contact an administrator."
   cannot_teleport_on_boat: "<yellow>Players on boats cannot teleport!"
   leash_depth_warning: "<yellow>⚠ Warning: Your leash chain has reached the maximum depth limit of {max-depth} levels! Some entities cannot teleport together"
   leash_restore_failed_distance: "<yellow>⚠ Some leashed entities were too far away to restore connections after teleportation."
 
   # Warp anchor related
-  create_permission: "<red>You don't have permission to create warp anchors!"
-  no_warp_name: "<red>Warp anchor name not set!\nPlease set the warp anchor name on the second line."
+  create_permission: "<red>You don't have permission to create warps!"
+  no_warp_name: "<red>Warp anchor name not set!\nPlease set the warp name on the second line."
   warp_created: "<green>Teleport sign successfully created."
-  warp_name_taken: "<red>A warp anchor with the same name already exists!"
+  warp_name_taken: "<red>A warp with the same name already exists!"
   warp_destroyed: "<green>Warp anchor has been destroyed."
   target_sign_created: "<green>Warp anchor successfully created."
-  destroy_permission: "<red>You don't have permission to destroy warp anchors!"
+  destroy_permission: "<red>You don't have permission to destroy warps!"
   use_permission: "<red>You don't have permission to use this teleport sign!"
   teleport: "<yellow>Teleporting to {warp-name}, arriving in {time} seconds..."
   teleport-success: "<green>Successfully teleported to {warp-name}."
   teleport-cancelled: "<red>Teleportation cancelled."
   warp_visibility_changed: "<green>Warp anchor {warp-name} usage permission has been changed to {visibility}."
-  cant_modify_others_warp: "<red>You can only modify warp anchors you created!"
-  set_visibility_usage: "<red>Usage: /wp set <public|private> <warp anchor name>"
+  cant_modify_others_warp: "<red>You can only modify warps you created!"
+  set_visibility_usage: "<red>Usage: /wp set <public|private> <warp name>"
   invalid_visibility: "<red>Usage permission must be 'public' or 'private'"
   private_warp: "<red>Insufficient permissions."
-  warp_limit_reached: "<red>You have reached the maximum warp anchor creation limit ({current}/{max})!"
-  my_warps_header: "<green>=== Warp anchors owned by {player} ==="
-  no_warps_owned: "<gray>{player} currently doesn't own any warp anchors."
+  warp_limit_reached: "<red>You have reached the maximum warp creation limit ({current}/{max})!"
+  my_warps_header: "<green>=== Warp owned by {player} ==="
+  my_warps_header_self: "<green>=== Your warp lists ==="
+  my_warps_header_others: "<green>=== Warp owned by {player} ==="
+  no_warps_owned: "<gray>{player} currently doesn't own any warps."
+  no_warps_owned_self: "<gray>You currently don't own any warps."
+  no_warps_owned_others: "<gray>{player} currently doesn't own any warps."
   warp_list_format: "<white>{index}. <aqua>{warp-name} <gray>({visibility}) - <yellow>{world} <gray>({x}, {y}, {z})"
-  total_warps: "<green>{player} owns a total of {count} warp anchors"
+  total_warps: "<green>{player} owns a total of {count} warps"
+  total_warps_self: "<green>You own a total of {count} warps"
+  total_warps_others: "<green>{player} owns a total of {count} warps"
   not_permission_view_others: "<red>Insufficient permissions!"
-  player_not_found_or_no_warps: "<red>Player '{player}' not found or has no warp anchors."
+  player_not_found_or_no_warps: "<red>Player '{player}' not found or has no warps."
   creator-display-format: "<gray>Creator: <white>{creator}"
-  cross_dimension_disabled: "<red>Cross-dimension teleportation is disabled! You cannot teleport to a warp anchor located in the <yellow>{target-world} <red>world."
+  cross_dimension_disabled: "<red>Cross-dimension teleportation is disabled! You cannot teleport to a warp located in the <yellow>{target-world} <red>world."
 
   # Warp anchor invitations
-  invite_success: "<green>Successfully invited {player} to use warp anchor '{warp-name}'!"
-  invite_received: "<green>{inviter} invited you to use warp anchor '{warp-name}'!"
-  uninvite_success: "<green>Removed {player}'s permission to use warp anchor '{warp-name}'."
-  not_your_warp: "<red>You can only invite players to use your own warp anchors!"
-  invite_usage: "<red>Usage: /wp invite <player> <warp anchor name>"
-  uninvite_usage: "<red>Usage: /wp uninvite <player> <warp anchor name>"
-  already_invited: "<yellow>Player {player} has already been invited to use this warp anchor!"
-  not_invited: "<red>Player {player} has not been invited to use this warp anchor."
-  invite_list: "<green>Invitation list for warp anchor '{warp-name}':"
-  no_invites: "<yellow>This warp anchor has not invited any players yet."
-  cant_modify_warp: "<red>You cannot modify the invitation list for this warp anchor!"
+  invite_success: "<green>Successfully invited {player} to use warp '{warp-name}'!"
+  invite_received: "<green>{inviter} invited you to use warp '{warp-name}'!"
+  uninvite_success: "<green>Removed {player}'s permission to use warp '{warp-name}'."
+  not_your_warp: "<red>You can only invite players to use your own warps!"
+  invite_usage: "<red>Usage: /wp invite <player> <warp name>"
+  uninvite_usage: "<red>Usage: /wp uninvite <player> <warp name>"
+  already_invited: "<yellow>Player {player} has already been invited to use this warp!"
+  not_invited: "<red>Player {player} has not been invited to use this warp."
+  invite_list: "<green>Invitation list for warp '{warp-name}':"
+  no_invites: "<yellow>This warp has not invited any players yet."
+  cant_modify_warp: "<red>You cannot modify the invitation list for this warp!"
   # Group functionality
   group_created: "<green>Successfully created group '{group-name}'!"
   group_deleted: "<green>Group '{group-name}' has been deleted."
@@ -138,7 +144,7 @@ messages:
   player_removed_from_group: "<green>Player '{player}' has been removed from group '{group-name}'."
   group_not_found: "<red>Group '{group-name}' not found."
   not_group_owner: "<red>You don't have permission to manage this group!"
-  warp_not_private: "<red>Only private warp anchors can be added to groups!"
+  warp_not_private: "<red>Only private warps can be added to groups!"
   warp_already_in_group: "<red>Warp anchor '{warp-name}' is already in group '{existing-group}'."
   max_groups_reached: "<red>You have reached the group creation limit ({max})!"
   group_feature_disabled: "<red>Group functionality is currently disabled!"
@@ -147,13 +153,41 @@ messages:
   group_help_create: "<aqua>/wp group create <group name> <gray>- Create a new group"
   group_help_list: "<aqua>/wp group list <gray>- View your group list"
   group_help_info: "<aqua>/wp group info <group name> <gray>- View detailed group information"
-  group_help_add: "<aqua>/wp group add <group name> <warp anchor> <gray>- Add warp anchor to group"
-  group_help_remove: "<aqua>/wp group remove <group name> <warp anchor> <gray>- Remove warp anchor from group"
+  group_help_add: "<aqua>/wp group add <group name> <warp> <gray>- Add warp to group"
+  group_help_remove: "<aqua>/wp group remove <group name> <warp> <gray>- Remove warp from group"
   group_help_invite: "<aqua>/wp group invite <group name> <player> <gray>- Invite player to join group"
   group_help_uninvite: "<aqua>/wp group uninvite <group name> <player> <gray>- Remove group member"
   group_help_delete: "<aqua>/wp group delete <group name> <gray>- Delete group"
 
   # Teleport commands
   tp_op_only: "<red>Insufficient permissions"
-  tp_usage: "<yellow>Usage: /signwarp tp <warp anchor name>"
+  tp_usage: "<yellow>Usage: /signwarp tp <warp name>"
   tp_success: "<green>Teleported to: {warp-name} (Creator: {creator})"
+  
+  # GUI related messages
+  gui_teleport_success: "<green>Teleported to {warp-name} <green>(Creator: <aqua>{creator}<green>)"
+  gui_warp_not_found: "<red>Warp not found: <yellow>{warp-name}"
+
+  # GUI item description text
+  gui_world_label: "World: "
+  gui_coordinates_label: "coordinates: "
+  gui_created_label: "Created: "
+  gui_creator_label: "Creator: "
+  gui_visibility_label: "visibility: "
+  gui_visibility_private: "Private"
+  gui_visibility_public: "Public"
+  gui_invited_players_label: "Invited players:"
+  gui_click_to_teleport: "Click to teleport"
+  gui_page_error: "<red>An error occurred while determining the current page."
+  gui_title_prefix: "Warps Admin"
+  gui_next_page: "Next Page"
+  gui_previous_page: "Previous Page"
+
+  # Visibility text settings
+  visibility_private: "Private"
+  visibility_public: "Public"
+  command_visibility_private: "private"
+  command_visibility_public: "public"
+
+  # Version command
+  version_op_only: "<red>Insufficient permissions"

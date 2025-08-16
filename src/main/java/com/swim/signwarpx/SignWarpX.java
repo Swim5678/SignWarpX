@@ -1,6 +1,6 @@
 package com.swim.signwarpx;
 
-import com.swim.signwarpx.groups.WarpGroup;
+import com.swim.signwarpx.Commands.SWCommand;
 import com.swim.signwarpx.gui.WarpGuiListener;
 import com.swim.signwarpx.utils.VersionCheckerUtils;
 import com.swim.signwarpx.web.WebApiManager;
@@ -14,10 +14,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-
-@SuppressWarnings("FieldCanBeLocal")
 public final class SignWarpX extends JavaPlugin implements Listener {
-    private final String currentVersion = "1.2.4"; // 請在此處填寫插件版本
+    private final String currentVersion = "1.2.5"; // 請在此處填寫插件版本
     private WebApiManager webApiManager;
 
     // 添加靜態方法供快速存取
@@ -129,5 +127,10 @@ public final class SignWarpX extends JavaPlugin implements Listener {
     // 添加設置 WebApiManager 的方法
     public void setWebApiManager(WebApiManager webApiManager) {
         this.webApiManager = webApiManager;
+    }
+
+    // 添加獲取版本的方法
+    public String getCurrentVersion() {
+        return this.currentVersion;
     }
 }

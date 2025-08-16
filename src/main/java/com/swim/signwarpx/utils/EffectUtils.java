@@ -78,8 +78,6 @@ public class EffectUtils {
                     }
                 }
             }
-
-            plugin.getLogger().warning("Particle not found in registry: " + particleName + ", using default particle");
             return getDefaultParticle();
 
         } catch (Exception e) {

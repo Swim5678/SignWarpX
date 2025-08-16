@@ -1,18 +1,16 @@
 package com.swim.signwarpx.utils;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.logging.Level;
-
-import org.bukkit.entity.Player;
-
-import javax.annotation.Nullable;
 
 public class VersionCheckerUtils {
 
@@ -57,10 +55,10 @@ public class VersionCheckerUtils {
                 if (!currentVersion.equalsIgnoreCase(latestVersion)) {
                     String updateMessage = "§6New version found! Current version: §e" + currentVersion + " §6Latest version: §a" + latestVersion;
                     String downloadMessage = "§bDownload link: §fhttps://modrinth.com/plugin/signwarpx/version/" + latestVersion;
-                    
+
                     plugin.getLogger().info("A new version of SignWarpX is available! Current version: " + currentVersion + " , Latest version: " + latestVersion);
                     plugin.getLogger().info("Download it from: https://modrinth.com/plugin/signwarpx/version/" + latestVersion);
-                    
+
                     if (player != null) {
                         player.sendMessage(updateMessage);
                         player.sendMessage(downloadMessage);

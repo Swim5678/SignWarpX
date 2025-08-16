@@ -109,9 +109,15 @@ messages:
   private_warp: "<red>權限不足。"
   warp_limit_reached: "<red>您已達到最大傳送錨點創建數量限制 ({current}/{max})！"
   my_warps_header: "<green>=== {player}擁有的傳送錨點 ==="
+  my_warps_header_self: "<green>=== 您擁有的傳送錨點 ==="
+  my_warps_header_others: "<green>=== {player}擁有的傳送錨點 ==="
   no_warps_owned: "<gray>{player}目前沒有擁有任何傳送錨點。"
+  no_warps_owned_self: "<gray>您目前沒有擁有任何傳送錨點。"
+  no_warps_owned_others: "<gray>{player}目前沒有擁有任何傳送錨點。"
   warp_list_format: "<white>{index}. <aqua>{warp-name} <gray>({visibility}) - <yellow>{world} <gray>({x}, {y}, {z})"
   total_warps: "<green>{player}總共擁有 {count} 個傳送錨點"
+  total_warps_self: "<green>您總共擁有 {count} 個傳送錨點"
+  total_warps_others: "<green>{player}總共擁有 {count} 個傳送錨點"
   not_permission_view_others: "<red>權限不足！"
   player_not_found_or_no_warps: "<red>找不到玩家 '{player}' 或該玩家沒有任何傳送錨點。"
   creator-display-format: "<gray>建立者: <white>{creator}"
@@ -157,3 +163,31 @@ messages:
   tp_op_only: "<red>權限不足"
   tp_usage: "<yellow>用法: /signwarp tp <傳送錨點名稱>"
   tp_success: "<green>已傳送到: {warp-name} (建立者: {creator})"
+  
+  # GUI相關訊息
+  gui_teleport_success: "<green>已傳送到 {warp-name} <green>(建立者: <aqua>{creator}<green>)"
+  gui_warp_not_found: "<red>找不到傳送點: <yellow>{warp-name}"
+
+  # GUI物品說明文字
+  gui_world_label: "世界: "
+  gui_coordinates_label: "座標: "
+  gui_created_label: "建立時間: "
+  gui_creator_label: "建立者: "
+  gui_visibility_label: "可見性: "
+  gui_visibility_private: "私人"
+  gui_visibility_public: "公共"
+  gui_invited_players_label: "被邀請的玩家:"
+  gui_click_to_teleport: "點擊傳送"
+  gui_page_error: "<red>確定當前頁面時發生錯誤。"
+  gui_title_prefix: "傳送點管理"
+  gui_next_page: "下一頁"
+  gui_previous_page: "上一頁"
+
+  # 可見性文字設定
+  visibility_private: "私人"
+  visibility_public: "公共"
+  command_visibility_private: "私人"
+  command_visibility_public: "公共"
+
+  # 版本指令
+  version_op_only: "<red>權限不足"

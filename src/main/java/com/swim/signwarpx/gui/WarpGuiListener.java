@@ -1,10 +1,12 @@
 package com.swim.signwarpx.gui;
 
+import com.swim.signwarpx.SignWarpX;
 import com.swim.signwarpx.Warp;
+import com.swim.signwarpx.utils.EventListener.MessageUtils;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,12 +14,16 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class WarpGuiListener implements Listener {
 
+    private final SignWarpX plugin;
+
     public WarpGuiListener(JavaPlugin plugin) {
-        // 可在此處進行相關初始化
+        this.plugin = (SignWarpX) plugin;
     }
 
     @EventHandler
@@ -26,7 +32,10 @@ public class WarpGuiListener implements Listener {
         Component titleComponent = event.getView().title();
         String title = PlainTextComponentSerializer.plainText().serialize(titleComponent);
 
-        if (title.startsWith("傳送點管理")) {
+        FileConfiguration config = plugin.getConfig();
+        String titlePrefix = config.getString("messages.gui_title_prefix", "Warps Admin");
+
+        if (title.startsWith(titlePrefix)) {
             event.setCancelled(true);
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
@@ -37,7 +46,7 @@ public class WarpGuiListener implements Listener {
             try {
                 currentPage = Integer.parseInt(titleParts[titleParts.length - 1]) - 1;
             } catch (NumberFormatException e) {
-                player.sendMessage(Component.text("確定當前頁面時發生錯誤。").color(NamedTextColor.RED));
+                MessageUtils.sendConfigMessage(player, config, "messages.gui_page_error");
                 return;
             }
 
@@ -47,13 +56,16 @@ public class WarpGuiListener implements Listener {
                 if (displayNameComponent != null) {
                     String displayName = PlainTextComponentSerializer.plainText().serialize(displayNameComponent);
 
-                    if (displayName.equals("下一頁")) {
+                    String nextPageText = config.getString("messages.gui_next_page", "Next Page");
+                    String previousPageText = config.getString("messages.gui_previous_page", "Previous Page");
+
+                    if (displayName.equals(nextPageText)) {
                         int totalWarps = Warp.getAll().size();
                         int totalPages = (int) Math.ceil((double) totalWarps / 45);
                         if (currentPage + 1 < totalPages) {
                             WarpGui.openWarpGui(player, currentPage + 1);
                         }
-                    } else if (displayName.equals("上一頁")) {
+                    } else if (displayName.equals(previousPageText)) {
                         if (currentPage > 0) {
                             WarpGui.openWarpGui(player, currentPage - 1);
                         }
@@ -67,22 +79,17 @@ public class WarpGuiListener implements Listener {
                     Warp warp = Warp.getByName(warpName);
                     if (warp != null) {
                         player.teleport(warp.getLocation());
-                        // 使用 Adventure API 發送訊息
-                        Component message = Component.text()
-                                .append(Component.text("已傳送到 ").color(NamedTextColor.GREEN))
-                                .append(Component.text(warp.getName()).color(NamedTextColor.YELLOW))
-                                .append(Component.text(" (建立者: ").color(NamedTextColor.GREEN))
-                                .append(Component.text(warp.getCreator()).color(NamedTextColor.AQUA))
-                                .append(Component.text(")").color(NamedTextColor.GREEN))
-                                .build();
-                        player.sendMessage(message);
+                        // 使用配置文件中的消息
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("{warp-name}", warp.getName());
+                        placeholders.put("{creator}", warp.getCreator());
+                        MessageUtils.sendConfigMessage(player, config, "messages.gui_teleport_success", placeholders);
                         player.closeInventory();
                     } else {
-                        Component errorMessage = Component.text()
-                                .append(Component.text("找不到傳送點: ").color(NamedTextColor.RED))
-                                .append(Component.text(warpName).color(NamedTextColor.YELLOW))
-                                .build();
-                        player.sendMessage(errorMessage);
+                        // 使用配置文件中的錯誤消息
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("{warp-name}", warpName);
+                        MessageUtils.sendConfigMessage(player, config, "messages.gui_warp_not_found", placeholders);
                     }
                 }
             }
