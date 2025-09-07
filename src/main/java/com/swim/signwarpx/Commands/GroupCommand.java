@@ -3,6 +3,7 @@ package com.swim.signwarpx.Commands;
 import com.swim.signwarpx.SignWarpX;
 import com.swim.signwarpx.Warp;
 import com.swim.signwarpx.WarpGroup;
+import com.swim.signwarpx.utils.ForbiddenWordsUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -409,6 +410,15 @@ public class GroupCommand {
         }
 
         String groupName = args[2];
+        
+        // 檢查違禁詞
+        if (ForbiddenWordsUtils.containsForbiddenWords(groupName, plugin.getConfig())) {
+            String forbiddenWord = ForbiddenWordsUtils.getFirstForbiddenWord(groupName, plugin.getConfig());
+            sendConfigMessage(player, "messages.forbidden_word_detected", "<red>名稱包含違禁詞，請重新命名！",
+                    "{forbidden-word}", forbiddenWord != null ? forbiddenWord : "");
+            return true;
+        }
+        
         //名稱長度限制，最多 8 個字
         if (groupName.codePointCount(0, groupName.length()) > 8) {
             Component message = Component.text("群組名稱最多 8 個字！")

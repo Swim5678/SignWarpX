@@ -2,6 +2,7 @@ package com.swim.signwarpx;
 
 import com.swim.signwarpx.Commands.SWCommand;
 import com.swim.signwarpx.gui.WarpGuiListener;
+import com.swim.signwarpx.utils.ApiVersionManager;
 import com.swim.signwarpx.utils.VersionCheckerUtils;
 import com.swim.signwarpx.web.WebApiManager;
 import org.bukkit.Bukkit;
@@ -14,8 +15,14 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public final class SignWarpX extends JavaPlugin implements Listener {
-    private final String currentVersion = "1.2.5"; // 請在此處填寫插件版本
+    private final String currentVersion = "1.2.6"; // 請在此處填寫插件版本
     private WebApiManager webApiManager;
 
     // 添加靜態方法供快速存取
@@ -24,6 +31,9 @@ public final class SignWarpX extends JavaPlugin implements Listener {
     }
 
     public void onEnable() {
+        // Initialize API version manager first
+        ApiVersionManager.getInstance();
+        
         saveDefaultConfig();
         setupFiles();
         setupDatabase();
@@ -77,11 +87,83 @@ public final class SignWarpX extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        
+        // 檢查並更新玩家名稱（異步執行避免阻塞主線程）
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> updatePlayerNameIfChanged(player));
+        
         if (player.isOp()) {
             VersionCheckerUtils.checkVersion(this, currentVersion, player);
+            // 只對OP顯示歡迎訊息
+            Bukkit.getScheduler().runTaskLaterAsynchronously(this, () -> player.sendMessage("§aWelcome to Swim's §bSignWarpX"), 20L); // 20 ticks = 1 秒
         }
-        // Run this task asynchronously to avoid blocking the main thread.
-        Bukkit.getScheduler().runTaskLaterAsynchronously(this, () -> player.sendMessage("§a歡迎使用Swim的§bSignWarpX"), 20L); // 20 ticks = 1 秒
+    }
+
+    /**
+     * 檢查並更新玩家名稱（如果有更改）
+     */
+    private void updatePlayerNameIfChanged(Player player) {
+        String currentName = player.getName();
+        String playerUuid = player.getUniqueId().toString();
+        
+        // 從資料庫中查詢是否存在該 UUID 的記錄
+        boolean nameChanged = checkPlayerNameChanged(playerUuid, currentName);
+        
+        if (nameChanged) {
+            getLogger().info("Updating player name for UUID " + playerUuid + " to: " + currentName);
+            
+            // 更新所有相關表格中的玩家名稱
+            TeleportHistory.updatePlayerName(playerUuid, currentName);
+            Warp.updatePlayerName(playerUuid, currentName);
+            WarpGroup.updatePlayerName(playerUuid, currentName);
+            
+            getLogger().info("Player name update completed for: " + currentName);
+        }
+    }
+
+    /**
+     * 檢查玩家名稱是否有更改
+     */
+    private boolean checkPlayerNameChanged(String playerUuid, String currentName) {
+        // 從傳送歷史中查詢最近的玩家名稱記錄
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + getDataFolder() + File.separator + "warps.db")) {
+            String sql = "SELECT player_name FROM teleport_history WHERE player_uuid = ? ORDER BY teleported_at DESC LIMIT 1";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, playerUuid);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    String storedName = rs.getString("player_name");
+                    return !currentName.equals(storedName);
+                }
+            }
+            
+            // 如果傳送歷史中沒有記錄，檢查 warps 表
+            String warpSql = "SELECT creator FROM warps WHERE creator_uuid = ? LIMIT 1";
+            try (PreparedStatement pstmt = conn.prepareStatement(warpSql)) {
+                pstmt.setString(1, playerUuid);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    String storedName = rs.getString("creator");
+                    return !currentName.equals(storedName);
+                }
+            }
+            
+            // 如果 warps 表中也沒有記錄，檢查群組表
+            String groupSql = "SELECT owner_name FROM warp_groups WHERE owner_uuid = ? LIMIT 1";
+            try (PreparedStatement pstmt = conn.prepareStatement(groupSql)) {
+                pstmt.setString(1, playerUuid);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    String storedName = rs.getString("owner_name");
+                    return !currentName.equals(storedName);
+                }
+            }
+            
+        } catch (SQLException e) {
+            getLogger().warning("Failed to check player name change: " + e.getMessage());
+        }
+        
+        // 如果沒有找到任何記錄，返回 false（不需要更新）
+        return false;
     }
 
     private void setupFiles() {

@@ -416,4 +416,35 @@ public class Warp {
         // 4. 檢查是否為包含此傳送點的群組成員
         return isPlayerInGroupWithWarp(playerUuid, warpName);
     }
+
+    /**
+     * 更新指定 UUID 的玩家名稱（創建者和邀請記錄）
+     */
+    public static void updatePlayerName(String playerUuid, String newPlayerName) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            // 更新 warps 表中的創建者名稱
+            String updateWarpsSql = "UPDATE warps SET creator = ? WHERE creator_uuid = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateWarpsSql)) {
+                pstmt.setString(1, newPlayerName);
+                pstmt.setString(2, playerUuid);
+                int updatedWarps = pstmt.executeUpdate();
+                if (updatedWarps > 0) {
+                    logger.info("Updated " + updatedWarps + " warp creator records for player: " + newPlayerName + " (UUID: " + playerUuid + ")");
+                }
+            }
+
+            // 更新 warp_invites 表中的邀請玩家名稱
+            String updateInvitesSql = "UPDATE warp_invites SET invited_name = ? WHERE invited_uuid = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateInvitesSql)) {
+                pstmt.setString(1, newPlayerName);
+                pstmt.setString(2, playerUuid);
+                int updatedInvites = pstmt.executeUpdate();
+                if (updatedInvites > 0) {
+                    logger.info("Updated " + updatedInvites + " warp invite records for player: " + newPlayerName + " (UUID: " + playerUuid + ")");
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to update player name in warp records: " + e.getMessage());
+        }
+    }
 }

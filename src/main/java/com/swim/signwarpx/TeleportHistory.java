@@ -252,6 +252,65 @@ public record TeleportHistory(String playerName, String playerUuid, String warpN
     }
 
     /**
+     * 獲取特定傳送點的傳送歷史
+     */
+    public static List<TeleportHistory> getWarpHistory(String warpName, int limit) {
+        List<TeleportHistory> warpHistory = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String sql = "SELECT * FROM teleport_history WHERE warp_name = ? ORDER BY teleported_at DESC LIMIT ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, warpName);
+                pstmt.setInt(2, limit);
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    TeleportHistory history = new TeleportHistory(
+                            rs.getString("player_name"),
+                            rs.getString("player_uuid"),
+                            rs.getString("warp_name"),
+                            rs.getString("from_world"),
+                            rs.getString("to_world"),
+                            rs.getString("teleported_at")
+                    );
+                    warpHistory.add(history);
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to get warp history: " + e.getMessage());
+        }
+        return warpHistory;
+    }
+
+    /**
+     * 獲取特定玩家在指定傳送點的傳送歷史
+     */
+    public static List<TeleportHistory> getWarpHistoryForPlayer(String warpName, String playerUuid, int limit) {
+        List<TeleportHistory> warpHistory = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String sql = "SELECT * FROM teleport_history WHERE warp_name = ? AND player_uuid = ? ORDER BY teleported_at DESC LIMIT ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, warpName);
+                pstmt.setString(2, playerUuid);
+                pstmt.setInt(3, limit);
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    TeleportHistory history = new TeleportHistory(
+                            rs.getString("player_name"),
+                            rs.getString("player_uuid"),
+                            rs.getString("warp_name"),
+                            rs.getString("from_world"),
+                            rs.getString("to_world"),
+                            rs.getString("teleported_at")
+                    );
+                    warpHistory.add(history);
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to get warp history for player: " + e.getMessage());
+        }
+        return warpHistory;
+    }
+
+    /**
      * 獲取玩家的傳送歷史
      */
     public static List<TeleportHistory> getPlayerHistory(String playerUuid, int limit) {
@@ -525,11 +584,60 @@ public record TeleportHistory(String playerName, String playerUuid, String warpN
         return trendData;
     }
 
+    /**
+     * 更新指定 UUID 的玩家名稱
+     */
+    public static void updatePlayerName(String playerUuid, String newPlayerName) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String sql = "UPDATE teleport_history SET player_name = ? WHERE player_uuid = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, newPlayerName);
+                pstmt.setString(2, playerUuid);
+                int updated = pstmt.executeUpdate();
+                if (updated > 0) {
+                    logger.info("Updated " + updated + " teleport history records for player: " + newPlayerName + " (UUID: " + playerUuid + ")");
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to update player name in teleport history: " + e.getMessage());
+        }
+    }
+
     public String getFormattedTeleportedAt() {
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy | hh:mm:ss a");
+            JavaPlugin plugin = JavaPlugin.getPlugin(SignWarpX.class);
+            String pattern = plugin.getConfig().getString("messages.date_time_format", "MM/dd/yyyy | hh:mm:ss a");
+            
             LocalDateTime dateTime = LocalDateTime.parse(teleportedAt);
-            return dateTime.format(formatter);
+            
+            // Check if pattern contains literal Chinese AM/PM text
+            if (pattern.contains("上午下午")) {
+                // Handle Chinese AM/PM format with literal text
+                String basePattern = pattern.replace("上午下午", "");
+                DateTimeFormatter baseFormatter = DateTimeFormatter.ofPattern(basePattern);
+                String baseFormatted = dateTime.format(baseFormatter);
+                
+                // Determine if it's AM or PM
+                int hour = dateTime.getHour();
+                String ampm = (hour < 12) ? "上午" : "下午";
+                
+                return baseFormatted + ampm;
+            } else if (pattern.contains("AM/PM")) {
+                // Handle English AM/PM format with literal text
+                String basePattern = pattern.replace("AM/PM", "");
+                DateTimeFormatter baseFormatter = DateTimeFormatter.ofPattern(basePattern);
+                String baseFormatted = dateTime.format(baseFormatter);
+                
+                // Determine if it's AM or PM
+                int hour = dateTime.getHour();
+                String ampm = (hour < 12) ? "AM" : "PM";
+                
+                return baseFormatted + ampm;
+            } else {
+                // Use standard Java formatting (supports 'a' for English AM/PM and other patterns)
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+                return dateTime.format(formatter);
+            }
         } catch (Exception e) {
             return teleportedAt;
         }

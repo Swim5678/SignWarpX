@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
  * 世界相關工具類
  * 統一處理世界名稱顯示和跨次元傳送檢查
  */
+@SuppressWarnings("SameReturnValue")
 public class WorldUtils {
 
     /**
@@ -18,7 +19,7 @@ public class WorldUtils {
      */
     public static String getDisplayWorldName(FileConfiguration config, String worldName) {
         if (worldName == null) {
-            return "未知世界";
+            return "Unknown World";
         }
 
         // 從配置檔案讀取世界名稱對映
@@ -27,15 +28,7 @@ public class WorldUtils {
             return displayName;
         }
 
-        // 如果配置檔案中沒有對應的世界名稱，使用預設邏輯
-        if (worldName.equals("world") || worldName.endsWith("_overworld")) {
-            return "主世界";
-        } else if (worldName.equals("world_nether") || worldName.endsWith("_nether")) {
-            return "地獄";
-        } else if (worldName.equals("world_the_end") || worldName.endsWith("_the_end")) {
-            return "終界";
-        }
-
+        // 如果配置檔案中沒有對應的世界名稱，直接返回原始世界名稱
         return worldName;
     }
 

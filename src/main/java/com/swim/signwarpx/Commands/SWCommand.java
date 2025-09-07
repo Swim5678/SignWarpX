@@ -1,6 +1,9 @@
 package com.swim.signwarpx.Commands;
 
-import com.swim.signwarpx.*;
+import com.swim.signwarpx.EventListener;
+import com.swim.signwarpx.SignWarpX;
+import com.swim.signwarpx.Warp;
+import com.swim.signwarpx.WarpGroup;
 import com.swim.signwarpx.gui.WarpGui;
 import com.swim.signwarpx.utils.VersionCheckerUtils;
 import com.swim.signwarpx.utils.WarpInviteUtils;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("SameReturnValue")
 public class SWCommand implements CommandExecutor, TabCompleter {
     private final JavaPlugin plugin;
     private final GroupCommand groupCommand;
@@ -35,8 +39,8 @@ public class SWCommand implements CommandExecutor, TabCompleter {
     private static @NotNull String getString(List<Warp> playerWarps, int i, String warpListFormat, JavaPlugin plugin) {
         Warp warp = playerWarps.get(i);
         String visibility = warp.isPrivate() ?
-            plugin.getConfig().getString("messages.visibility_private", "私人") :
-            plugin.getConfig().getString("messages.visibility_public", "公共");
+                plugin.getConfig().getString("messages.visibility_private", "私人") :
+                plugin.getConfig().getString("messages.visibility_public", "公共");
         return warpListFormat
                 .replace("{index}", String.valueOf(i + 1))
                 .replace("{warp-name}", warp.getName())
@@ -127,6 +131,11 @@ public class SWCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("history")) {
+            handleHistoryCommand(sender, args);
+            return true;
+        }
+
         // 僅限 OP 傳送指定 Warp
         if (args[0].equalsIgnoreCase("tp")) {
             return handleWptCommand(sender, args);
@@ -153,6 +162,7 @@ public class SWCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("signwarp.reload")) cmds.add("reload");
             cmds.add("set");
             cmds.add("list-own");
+            cmds.add("history");
             if (sender.hasPermission("signwarp.invite")) {
                 cmds.add("invite");
                 cmds.add("uninvite");
@@ -222,6 +232,23 @@ public class SWCommand implements CommandExecutor, TabCompleter {
                                 .distinct()
                                 .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                                 .forEach(completions::add);
+                    }
+                    break;
+                case "history":
+                    // 補全傳送點名稱
+                    Warp.getAll().stream()
+                            .map(Warp::getName)
+                            .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
+                            .forEach(completions::add);
+                    
+                    // 只有 OP 可以查看其他玩家的歷史
+                    if (sender instanceof Player p && p.isOp()) {
+                        // 補全線上玩家名稱
+                        Bukkit.getOnlinePlayers().forEach(pl -> {
+                            if (pl.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                                completions.add(pl.getName());
+                            }
+                        });
                     }
                     break;
             }
@@ -503,9 +530,9 @@ public class SWCommand implements CommandExecutor, TabCompleter {
                     // 停止 Web 伺服器
                     signWarpX.getWebApiManager().stopWebServer();
                     signWarpX.setWebApiManager(null);
-                    plugin.getLogger().info("Web 伺服器已停用");
+                    plugin.getLogger().info("Web server has been disabled.");
                 } catch (Exception e) {
-                    plugin.getLogger().warning("停用 Web 伺服器時發生錯誤: " + e.getMessage());
+                    plugin.getLogger().warning("An error occurred while disabling the web server: " + e.getMessage());
                 }
             } else if (newPort != currentPort) {
                 // 端口變更，重啟伺服器
@@ -532,7 +559,7 @@ public class SWCommand implements CommandExecutor, TabCompleter {
                     String reloadMessage = "{\"type\":\"config_reload\",\"webEnabled\":true,\"message\":\"Configuration reloaded\"}";
                     signWarpX.getWebApiManager().getWebSocketHandler().broadcast(reloadMessage);
                 } catch (Exception e) {
-                    plugin.getLogger().warning("廣播配置重載消息失敗: " + e.getMessage());
+                    plugin.getLogger().warning("Failed to broadcast configuration reload message: " + e.getMessage());
                 }
             }
         } else if (webEnabled) {
@@ -540,16 +567,16 @@ public class SWCommand implements CommandExecutor, TabCompleter {
             try {
                 signWarpX.setWebApiManager(new com.swim.signwarpx.web.WebApiManager(signWarpX));
                 signWarpX.getWebApiManager().startWebServer();
-                plugin.getLogger().info("Web 伺服器已啟用，端口: " + newPort);
+                plugin.getLogger().info("Web server has been enabled, port: " + newPort);
             } catch (Exception e) {
-                plugin.getLogger().severe("啟動 Web 伺服器時發生錯誤: " + e.getMessage());
+                plugin.getLogger().severe("An error occurred while starting the web server: " + e.getMessage());
             }
         }
     }
 
     private void handleSetCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sendMessage(sender, "<red>此指令只能由玩家執行。");
+            sendMessage(sender, "<red>This command can only be executed by a player.");
             return;
         }
         if (args.length < 3) {
@@ -822,6 +849,222 @@ public class SWCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * 處理查看傳送歷史指令
+     * /signwarp history - 查看自己的傳送歷史（最近10次）
+     * /signwarp history <傳送點名稱> - 查看指定傳送點的使用歷史（最近10次）
+     * /signwarp history <玩家名稱> - (僅OP) 查看指定玩家的傳送歷史（最近10次）
+     */
+    private void handleHistoryCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sendMessage(sender, "<red>此指令只能由玩家執行。");
+            return;
+        }
+
+        if (args.length == 1) {
+            // 查看自己的傳送歷史
+            handlePlayerHistory(player, player.getUniqueId().toString(), player.getName(), false);
+        } else if (args.length == 2) {
+            String target = args[1];
+            
+            // 檢查是否為傳送點名稱
+            Warp warp = Warp.getByName(target);
+            if (warp != null) {
+                // 查看傳送點歷史
+                handleWarpHistory(player, target);
+                return;
+            }
+            
+            // 檢查是否為玩家名稱 (僅OP可用)
+            if (player.isOp()) {
+                Player targetPlayer = Bukkit.getPlayer(target);
+                
+                if (targetPlayer != null) {
+                    // 線上玩家
+                    String onlinePlayerUuid = targetPlayer.getUniqueId().toString();
+                    String onlinePlayerName = targetPlayer.getName();
+                    handlePlayerHistory(player, onlinePlayerUuid, onlinePlayerName, true);
+                } else {
+                    // 先顯示載入訊息
+                    String loadingMsg = plugin.getConfig().getString("messages.history_loading",
+                            "<gray>正在載入傳送歷史...");
+                    sendMessage(player, loadingMsg);
+                    
+                    // 異步查找玩家UUID
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        String offlinePlayerUuid = getPlayerUuidFromHistory(target);
+                        
+                        // 回到主線程處理結果
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            if (offlinePlayerUuid == null) {
+                                sendConfigMessage(sender, "messages.player_not_found_in_history",
+                                        "<red>找不到玩家 '{player}' 的傳送記錄。",
+                                        "{player}", target);
+                                return;
+                            }
+                            
+                            // 找到UUID後繼續處理（這裡會再次異步查詢歷史）
+                            handlePlayerHistory(player, offlinePlayerUuid, target, true);
+                        });
+                    });
+                }
+            } else {
+                sendConfigMessage(sender, "messages.not_permission",
+                        "<red>權限不足！");
+            }
+        } else {
+            sendConfigMessage(sender, "messages.history_usage",
+                    "<yellow>用法: /signwarp history [傳送點名稱|玩家名稱]");
+        }
+    }
+
+    /**
+     * 處理玩家傳送歷史顯示（異步查詢）
+     */
+    private void handlePlayerHistory(Player viewer, String targetPlayerUuid, String targetPlayerName, boolean isViewingOthers) {
+        final int HISTORY_LIMIT = 10;
+        
+        // 先顯示載入訊息
+        String loadingMsg = plugin.getConfig().getString("messages.history_loading",
+                "<gray>正在載入傳送歷史...");
+        sendMessage(viewer, loadingMsg);
+        
+        // 異步執行資料庫查詢
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<com.swim.signwarpx.TeleportHistory> history = com.swim.signwarpx.TeleportHistory.getPlayerHistory(targetPlayerUuid, HISTORY_LIMIT);
+            
+            // 回到主線程顯示結果
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                String headerMsg, noHistoryMsg;
+                
+                if (isViewingOthers) {
+                    headerMsg = plugin.getConfig().getString("messages.history_header_others",
+                            "<green>=== {player} 的傳送歷史 ===").replace("{player}", targetPlayerName);
+                    noHistoryMsg = plugin.getConfig().getString("messages.no_history_others",
+                            "<gray>{player} 沒有傳送記錄。").replace("{player}", targetPlayerName);
+                } else {
+                    headerMsg = plugin.getConfig().getString("messages.history_header_self",
+                            "<green>=== 我的傳送歷史 ===");
+                    noHistoryMsg = plugin.getConfig().getString("messages.no_history_self",
+                            "<gray>您沒有傳送記錄。");
+                }
+                
+                sendMessage(viewer, headerMsg);
+                
+                if (history.isEmpty()) {
+                    sendMessage(viewer, noHistoryMsg);
+                } else {
+                    String historyFormat = plugin.getConfig().getString("messages.history_format",
+                            "<white>{index}. <aqua>{warp-name} <gray>({from-world} → {to-world}) <yellow>{time}");
+                    
+                    for (int i = 0; i < history.size(); i++) {
+                        com.swim.signwarpx.TeleportHistory record = history.get(i);
+                        String formatted = historyFormat
+                                .replace("{index}", String.valueOf(i + 1))
+                                .replace("{warp-name}", record.warpName())
+                                .replace("{from-world}", getWorldDisplayName(record.fromWorld()))
+                                .replace("{to-world}", getWorldDisplayName(record.toWorld()))
+                                .replace("{time}", record.getFormattedTeleportedAt());
+                        
+                        sendMessage(viewer, formatted);
+                    }
+                    
+                    String totalMsg = plugin.getConfig().getString("messages.history_total",
+                            "<gray>顯示最近 {count} 次傳送記錄").replace("{count}", String.valueOf(history.size()));
+                    sendMessage(viewer, totalMsg);
+                }
+            });
+        });
+    }
+
+    /**
+     * 處理傳送點歷史顯示（異步查詢）
+     */
+    private void handleWarpHistory(Player viewer, String warpName) {
+        final int HISTORY_LIMIT = 10;
+        
+        // 先顯示載入訊息
+        String loadingMsg = plugin.getConfig().getString("messages.history_loading",
+                "<gray>正在載入傳送歷史...");
+        sendMessage(viewer, loadingMsg);
+        
+        // 異步執行資料庫查詢
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<com.swim.signwarpx.TeleportHistory> history;
+            
+            // 檢查權限：OP 可以看到所有玩家的記錄，普通玩家只能看到自己的記錄
+            if (viewer.isOp()) {
+                history = com.swim.signwarpx.TeleportHistory.getWarpHistory(warpName, HISTORY_LIMIT);
+            } else {
+                history = com.swim.signwarpx.TeleportHistory.getWarpHistoryForPlayer(warpName, viewer.getUniqueId().toString(), HISTORY_LIMIT);
+            }
+            
+            // 回到主線程顯示結果
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                String headerMsg = plugin.getConfig().getString("messages.warp_history_header",
+                        "<green>=== 傳送點 '{warp-name}' 的使用歷史 ===").replace("{warp-name}", warpName);
+                
+                sendMessage(viewer, headerMsg);
+                
+                if (history.isEmpty()) {
+                    String noHistoryMsg = plugin.getConfig().getString("messages.no_warp_history",
+                            "<gray>傳送點 '{warp-name}' 沒有使用記錄。").replace("{warp-name}", warpName);
+                    sendMessage(viewer, noHistoryMsg);
+                } else {
+                    String historyFormat = plugin.getConfig().getString("messages.warp_history_format",
+                            "<white>{index}. <aqua>{player-name} <gray>({from-world} → {to-world}) <yellow>{time}");
+                    
+                    for (int i = 0; i < history.size(); i++) {
+                        com.swim.signwarpx.TeleportHistory record = history.get(i);
+                        String formatted = historyFormat
+                                .replace("{index}", String.valueOf(i + 1))
+                                .replace("{player-name}", record.playerName())
+                                .replace("{from-world}", getWorldDisplayName(record.fromWorld()))
+                                .replace("{to-world}", getWorldDisplayName(record.toWorld()))
+                                .replace("{time}", record.getFormattedTeleportedAt());
+                        
+                        sendMessage(viewer, formatted);
+                    }
+                    
+                    String totalMsg = plugin.getConfig().getString("messages.warp_history_total",
+                            "<gray>顯示最近 {count} 次使用記錄").replace("{count}", String.valueOf(history.size()));
+                    sendMessage(viewer, totalMsg);
+                }
+            });
+        });
+    }
+
+    /**
+     * 從傳送歷史中查找玩家的UUID
+     */
+    private String getPlayerUuidFromHistory(String playerName) {
+        List<com.swim.signwarpx.TeleportHistory> recentHistory = com.swim.signwarpx.TeleportHistory.getRecentTeleports(1000);
+        for (com.swim.signwarpx.TeleportHistory record : recentHistory) {
+            if (record.playerName().equalsIgnoreCase(playerName)) {
+                return record.playerUuid();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 獲取世界顯示名稱
+     */
+    private String getWorldDisplayName(String worldName) {
+        if (worldName == null) {
+            return "Unknown World";
+        }
+        
+        // 確保使用正確的配置來獲取世界顯示名稱
+        String displayName = plugin.getConfig().getString("world-display-names." + worldName);
+        if (displayName != null && !displayName.trim().isEmpty()) {
+            return displayName;
+        }
+        
+        // 如果配置中沒有對應的名稱，返回原始名稱
+        return worldName;
+    }
+
+    /**
      * 輔助方法：根據玩家名稱查找 UUID
      * 從現有的傳送點資料中查找該玩家的 UUID
      */
@@ -904,4 +1147,3 @@ public class SWCommand implements CommandExecutor, TabCompleter {
         }
     }
 }
-

@@ -1,7 +1,8 @@
 package com.swim.signwarpx;
 
-import com.swim.signwarpx.utils.*;
 import com.swim.signwarpx.utils.EventListener.*;
+import com.swim.signwarpx.utils.ForbiddenWordsUtils;
+import com.swim.signwarpx.utils.SignUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -254,6 +255,17 @@ public class EventListener implements Listener {
     private void handleWarpTargetCreation(SignChangeEvent event, Player player, SignData signData, Warp existingWarp) {
         if (existingWarp != null) {
             sendConfigMessage(player, "messages.warp_name_taken");
+            event.setCancelled(true);
+            return;
+        }
+
+        // 檢查違禁詞
+        if (ForbiddenWordsUtils.containsForbiddenWords(signData.warpName, config)) {
+            String forbiddenWord = ForbiddenWordsUtils.getFirstForbiddenWord(signData.warpName, config);
+            Map<String, String> placeholders = Map.of(
+                    "{forbidden-word}", forbiddenWord != null ? forbiddenWord : ""
+            );
+            sendConfigMessage(player, "messages.forbidden_word_detected", placeholders);
             event.setCancelled(true);
             return;
         }

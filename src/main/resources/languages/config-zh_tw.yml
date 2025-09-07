@@ -73,6 +73,28 @@ default-visibility: false
 show-creator-on-sign: true
 
 ###############################################################################
+# 違禁詞設定
+###############################################################################
+forbidden-words:
+  # 是否啟用違禁詞過濾（true：啟用，false：停用）
+  enabled: true
+  # 違禁詞檢查是否區分大小寫（true：區分大小寫，false：不區分大小寫）
+  case-sensitive: false
+  # 是否只匹配完整單詞（true：僅完整單詞，false：部分匹配）
+  whole-word-only: false
+  # 違禁詞清單
+  words:
+    - "管理員"
+    - "admin"
+    - "op"
+    - "伺服器"
+    - "server"
+    - "操你媽"
+    - "幹你娘"
+    - "fuck"
+    - "shit"
+
+###############################################################################
 # 自訂訊息
 ###############################################################################
 messages:
@@ -191,3 +213,27 @@ messages:
 
   # 版本指令
   version_op_only: "<red>權限不足"
+  
+  # 違禁詞相關訊息
+  forbidden_word_detected: "<red>名稱包含違禁詞 '{forbidden-word}'，請重新命名！"
+
+  # 歷史記錄指令訊息
+  history_loading: "<gray>正在載入傳送歷史..."
+  history_usage: "<yellow>用法: /signwarp history [傳送點名稱|玩家名稱]"
+  history_header_self: "<green>=== 我的傳送歷史 ==="
+  history_header_others: "<green>=== {player} 的傳送歷史 ==="
+  no_history_self: "<gray>您沒有傳送記錄。"
+  no_history_others: "<gray>{player} 沒有傳送記錄。"
+  history_format: "<white>{index}. <aqua>{warp-name} <gray>({from-world} → {to-world}) <yellow>{time}"
+  history_total: "<gray>顯示最近 {count} 次傳送記錄"
+  warp_history_header: "<green>=== 傳送點 '{warp-name}' 的使用歷史 ==="
+  no_warp_history: "<gray>傳送點 '{warp-name}' 沒有使用記錄。"
+  warp_history_format: "<white>{index}. <aqua>{player-name} <gray>({from-world} → {to-world}) <yellow>{time}"
+  warp_history_total: "<gray>顯示最近 {count} 次使用記錄"
+  player_not_found_in_history: "<red>找不到玩家 '{player}' 的傳送記錄。"
+  history_not_found: "<red>找不到名為 '{name}' 的傳送點或玩家。"
+  
+  # 傳送歷史的日期時間格式
+  # 使用文字直接顯示上午下午：
+  # 中文: "MM/dd/yyyy | hh:mm:ss 上午下午" → "12/25/2024 | 02:30:45 下午"
+  date_time_format: "MM/dd/yyyy | hh:mm:ss 上午下午"

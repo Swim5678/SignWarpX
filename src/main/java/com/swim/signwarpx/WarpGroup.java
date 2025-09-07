@@ -314,4 +314,35 @@ public record WarpGroup(String groupName, String ownerUuid, String ownerName, St
     // 內部類別：群組成員
     public record GroupMember(String uuid, String name, String invitedAt) {
     }
+
+    /**
+     * 更新指定 UUID 的玩家名稱（群組擁有者和成員記錄）
+     */
+    public static void updatePlayerName(String playerUuid, String newPlayerName) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            // 更新 warp_groups 表中的擁有者名稱
+            String updateOwnerSql = "UPDATE warp_groups SET owner_name = ? WHERE owner_uuid = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateOwnerSql)) {
+                pstmt.setString(1, newPlayerName);
+                pstmt.setString(2, playerUuid);
+                int updatedOwner = pstmt.executeUpdate();
+                if (updatedOwner > 0) {
+                    logger.info("Updated " + updatedOwner + " warp group owner records for player: " + newPlayerName + " (UUID: " + playerUuid + ")");
+                }
+            }
+
+            // 更新 warp_group_members 表中的成員名稱
+            String updateMemberSql = "UPDATE warp_group_members SET member_name = ? WHERE member_uuid = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateMemberSql)) {
+                pstmt.setString(1, newPlayerName);
+                pstmt.setString(2, playerUuid);
+                int updatedMembers = pstmt.executeUpdate();
+                if (updatedMembers > 0) {
+                    logger.info("Updated " + updatedMembers + " warp group member records for player: " + newPlayerName + " (UUID: " + playerUuid + ")");
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to update player name in warp group records: " + e.getMessage());
+        }
+    }
 }

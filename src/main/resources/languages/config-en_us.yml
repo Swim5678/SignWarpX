@@ -73,6 +73,25 @@ default-visibility: false
 show-creator-on-sign: true
 
 ###############################################################################
+# Forbidden words settings
+###############################################################################
+forbidden-words:
+  # Whether to enable forbidden words filtering (true: enable, false: disable)
+  enabled: true
+  # Whether forbidden words checking is case sensitive (true: case sensitive, false: case insensitive)
+  case-sensitive: false
+  # Whether to only match whole words (true: whole word only, false: partial match)
+  whole-word-only: false
+  # List of forbidden words
+  words:
+    - "admin"
+    - "op"
+    - "server"
+    - "fuck"
+    - "shit"
+    - "damn"
+
+###############################################################################
 # Custom Messages
 ###############################################################################
 messages:
@@ -191,3 +210,27 @@ messages:
 
   # Version command
   version_op_only: "<red>Insufficient permissions"
+  
+  # Forbidden words related messages
+  forbidden_word_detected: "<red>Name contains forbidden word '{forbidden-word}', please rename!"
+
+  # History command messages
+  history_loading: "<gray>Loading teleport history..."
+  history_usage: "<yellow>Usage: /signwarp history [warp-name|player-name]"
+  history_header_self: "<green>=== My Teleport History ==="
+  history_header_others: "<green>=== {player}'s Teleport History ==="
+  no_history_self: "<gray>You have no teleport records."
+  no_history_others: "<gray>{player} has no teleport records."
+  history_format: "<white>{index}. <aqua>{warp-name} <gray>({from-world} → {to-world}) <yellow>{time}"
+  history_total: "<gray>Showing last {count} teleport records"
+  warp_history_header: "<green>=== Warp '{warp-name}' Usage History ==="
+  no_warp_history: "<gray>Warp '{warp-name}' has no usage records."
+  warp_history_format: "<white>{index}. <aqua>{player-name} <gray>({from-world} → {to-world}) <yellow>{time}"
+  warp_history_total: "<gray>Showing last {count} usage records"
+  player_not_found_in_history: "<red>Cannot find teleport records for player '{player}'."
+  history_not_found: "<red>Cannot find warp or player named '{name}'."
+  
+  # Date and time format for teleport history
+  # Use literal text for AM/PM display:
+  # English: "MM/dd/yyyy | hh:mm:ss AM/PM" → "12/25/2024 | 02:30:45 PM"
+  date_time_format: "MM/dd/yyyy | hh:mm:ss AM/PM"
