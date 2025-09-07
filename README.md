@@ -305,7 +305,7 @@ messages:
 
 ##  遊戲截圖
 
-![插件使用示例](https://i.imgur.com/vrdM5sD.png)
+![插件使用示例](https://i.imgur.com/XRjCmyc_d.webp?maxwidth=760&fidelity=grand)
 
 ##  支援與回饋
 
