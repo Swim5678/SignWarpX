@@ -53,8 +53,6 @@ public class Warp {
                     double x = rs.getDouble("x");
                     double y = rs.getDouble("y");
                     double z = rs.getDouble("z");
-                    float yaw = rs.getFloat("yaw");
-                    float pitch = rs.getFloat("pitch");
                     String createdAt = rs.getString("created_at");
                     String creator = rs.getString("creator");
                     String creatorUuid = rs.getString("creator_uuid");
@@ -62,7 +60,8 @@ public class Warp {
                     if (creator == null) creator = "unknown";
                     if (creatorUuid == null) creatorUuid = "";
                     if (createdAt == null) createdAt = LocalDateTime.now().toString();
-                    Location location = new Location(world, x, y, z, yaw, pitch);
+                    // 建立不含 yaw/pitch 的位置
+                    Location location = new Location(world, x, y, z);
                     return new Warp(warpName, location, createdAt, creator, creatorUuid, isPrivate);
                 }
             }
@@ -90,8 +89,6 @@ public class Warp {
                     double x = rs.getDouble("x");
                     double y = rs.getDouble("y");
                     double z = rs.getDouble("z");
-                    float yaw = rs.getFloat("yaw");
-                    float pitch = rs.getFloat("pitch");
                     String createdAt = rs.getString("created_at");
                     String creator = rs.getString("creator");
                     String creatorUuid = rs.getString("creator_uuid");
@@ -99,7 +96,7 @@ public class Warp {
                     if (creator == null) creator = "unknown";
                     if (creatorUuid == null) creatorUuid = "";
                     if (createdAt == null) createdAt = LocalDateTime.now().toString();
-                    Location location = new Location(world, x, y, z, yaw, pitch);
+                    Location location = new Location(world, x, y, z);
                     warps.add(new Warp(name, location, createdAt, creator, creatorUuid, isPrivate));
                 }
             }
@@ -150,8 +147,6 @@ public class Warp {
                     double x = rs.getDouble("x");
                     double y = rs.getDouble("y");
                     double z = rs.getDouble("z");
-                    float yaw = rs.getFloat("yaw");
-                    float pitch = rs.getFloat("pitch");
                     String createdAt = rs.getString("created_at");
                     String creator = rs.getString("creator");
                     String creatorUuid = rs.getString("creator_uuid");
@@ -159,7 +154,7 @@ public class Warp {
                     if (creator == null) creator = "unknown";
                     if (creatorUuid == null) creatorUuid = "";
                     if (createdAt == null) createdAt = LocalDateTime.now().toString();
-                    Location location = new Location(world, x, y, z, yaw, pitch);
+                    Location location = new Location(world, x, y, z);
                     warps.add(new Warp(name, location, createdAt, creator, creatorUuid, isPrivate));
                 }
             }
@@ -180,7 +175,7 @@ public class Warp {
     }
 
     /**
-     * 修改 createTable()，除了原有欄位外，增加 creator 欄位與 migration 檢查
+     * 修改 createTable()，移除 yaw/pitch 欄位，並保留 is_private 欄位遷移檢查
      */
     public static void createTable() {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
@@ -190,18 +185,16 @@ public class Warp {
                     "x REAL, " +
                     "y REAL, " +
                     "z REAL, " +
-                    "yaw REAL, " +
-                    "pitch REAL, " +
                     "created_at TEXT, " +
                     "creator TEXT, " +
                     "creator_uuid TEXT, " +
-                    "is_private INTEGER DEFAULT 0" + // 新增此行
+                    "is_private INTEGER DEFAULT 0" +
                     ")";
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute(sql);
             }
 
-            // 新增 migration 檢查
+            // 新增 migration 檢查（若舊表缺少 is_private 欄位則補上）
             DatabaseMetaData meta = conn.getMetaData();
             ResultSet rs = meta.getColumns(null, null, "warps", "is_private");
             if (!rs.next()) {
@@ -288,21 +281,19 @@ public class Warp {
 
     public void save() {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String sql = "INSERT OR REPLACE INTO warps (name, world, x, y, z, yaw, pitch, created_at, creator, creator_uuid, is_private) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM warps WHERE name = ?), ?), ?, ?, ?)";
+            String sql = "INSERT OR REPLACE INTO warps (name, world, x, y, z, created_at, creator, creator_uuid, is_private) " +
+                    "VALUES (?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM warps WHERE name = ?), ?), ?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, warpName);
                 pstmt.setString(2, Objects.requireNonNull(location.getWorld()).getName());
                 pstmt.setDouble(3, location.getX());
                 pstmt.setDouble(4, location.getY());
                 pstmt.setDouble(5, location.getZ());
-                pstmt.setFloat(6, location.getYaw());
-                pstmt.setFloat(7, location.getPitch());
-                pstmt.setString(8, warpName);
-                pstmt.setString(9, createdAt);
-                pstmt.setString(10, creator);
-                pstmt.setString(11, creatorUuid);
-                pstmt.setInt(12, isPrivate ? 1 : 0); // 新增此行
+                pstmt.setString(6, warpName);
+                pstmt.setString(7, createdAt);
+                pstmt.setString(8, creator);
+                pstmt.setString(9, creatorUuid);
+                pstmt.setInt(10, isPrivate ? 1 : 0);
                 pstmt.executeUpdate();
             }
         } catch (SQLException e) {

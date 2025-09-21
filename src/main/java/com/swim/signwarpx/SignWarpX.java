@@ -22,7 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class SignWarpX extends JavaPlugin implements Listener {
-    private final String currentVersion = "1.2.6"; // 請在此處填寫插件版本
+    private final String currentVersion = "1.2.7"; // 請在此處填寫插件版本
     private WebApiManager webApiManager;
 
     // 添加靜態方法供快速存取

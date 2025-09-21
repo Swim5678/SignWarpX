@@ -13,6 +13,7 @@ import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -296,10 +297,43 @@ public class EventListener implements Listener {
     private void createWarpTarget(SignChangeEvent event, Player player, SignData signData) {
         String currentDateTime = LocalDateTime.now().toString();
         boolean defaultVisibility = config.getBoolean("default-visibility", false);
-        Warp warp = new Warp(signData.warpName, event.getBlock().getLocation(), currentDateTime,
+
+        // 使用方塊座標作為傳送點；不儲存或設定 yaw/pitch
+        Location loc = event.getBlock().getLocation().clone();
+
+        // 讓告示牌在建立時「面對玩家」
+        Block signBlock = event.getBlock();
+        try {
+            BlockData data = signBlock.getBlockData();
+            // 計算從告示牌指向玩家的水平方向
+            Location pLoc = player.getLocation();
+            double dx = pLoc.getX() - (signBlock.getX() + 0.5);
+            double dz = pLoc.getZ() - (signBlock.getZ() + 0.5);
+            BlockFace face = horizontalFaceFrom(dx, dz);
+
+            if (data instanceof WallSign wall) {
+                // 壁掛告示牌：facing 即為正面方向（玩家閱讀的方向）
+                // 要讓正面朝向玩家，直接將 facing 設為朝向玩家的方向；但需確保背後有可附著的實體方塊
+                BlockFace attach = face.getOppositeFace();
+                Block support = signBlock.getRelative(attach);
+                if (support.getType().isSolid()) {
+                    wall.setFacing(face);
+                    signBlock.setBlockData(wall, false);
+                }
+            } else if (data instanceof org.bukkit.block.data.type.Sign standing) {
+                // 站立告示牌：rotation 直接代表正面方向
+                standing.setRotation(face);
+                signBlock.setBlockData(standing, false);
+            }
+        } catch (Exception ignored) {
+        }
+
+        Warp warp = new Warp(signData.warpName, loc, currentDateTime,
                 player.getName(), player.getUniqueId().toString(), defaultVisibility);
         warp.save();
+
         event.line(0, Component.text(SignData.HEADER_TARGET).color(NamedTextColor.BLUE));
+
         boolean showCreatorOnSign = config.getBoolean("show-creator-on-sign", true);
         if (showCreatorOnSign) {
             String creatorDisplayFormat = config.getString("messages.creator-display-format", "<gray>建立者: <white>{creator}");
@@ -307,7 +341,16 @@ public class EventListener implements Listener {
             event.line(2, miniMessage.deserialize(formattedCreatorInfo));
         }
 
-        sendConfigMessage(player, "messages.target_sign_created");
+        MessageUtils.sendConfigMessage(player, config, "messages.target_sign_created");
+    }
+
+    // 將 dx,dz 映射到最接近的水平 BlockFace（N/E/S/W）
+    private BlockFace horizontalFaceFrom(double dx, double dz) {
+        if (Math.abs(dx) > Math.abs(dz)) {
+            return dx > 0 ? BlockFace.EAST : BlockFace.WEST;
+        } else {
+            return dz > 0 ? BlockFace.SOUTH : BlockFace.NORTH;
+        }
     }
 
     @EventHandler
@@ -905,3 +948,4 @@ public class EventListener implements Listener {
         return signData.isWarpSign();
     }
 }
+

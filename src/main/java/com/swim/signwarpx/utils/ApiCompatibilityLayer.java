@@ -84,7 +84,7 @@ public class ApiCompatibilityLayer {
         }
     }
     
-    private void sendActionBarModern(Player player, String message) throws Exception {
+    private void sendActionBarModern(Player player, String message) {
         try {
             // Try newer Component-based approach
             net.kyori.adventure.text.Component component = net.kyori.adventure.text.Component.text(message);
@@ -95,7 +95,7 @@ public class ApiCompatibilityLayer {
         }
     }
     
-    private void sendActionBarLegacy(Player player, String message) throws Exception {
+    private void sendActionBarLegacy(Player player, String message) {
         // Use reflection for legacy support if needed
         player.sendActionBar(message);
     }
