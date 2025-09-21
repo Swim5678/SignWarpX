@@ -1,8 +1,3 @@
-# SignWarpX [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21+-green.svg)](https://www.minecraft.net/) [![Paper](https://img.shields.io/badge/Paper-Required-blue.svg)](https://papermc.io/)
-Here’s the English translation of your document:
-
----
-
 # SignWarpX [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.4+-green.svg)](https://www.minecraft.net/) [![Paper](https://img.shields.io/badge/Paper-Required-blue.svg)](https://papermc.io/)
 
 ## Introduction
