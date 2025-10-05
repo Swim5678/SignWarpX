@@ -42,15 +42,6 @@ SignWarpX is a teleportation plugin designed specifically for Minecraft Paper se
 * **Server Software**: Paper (recommended) or Paper-based forks
 * **Java Version**: Java 21 or higher
 
-### API Version Support
-
-SignWarpX automatically switches API versions:
-
-* **1.21.6 and above** → Uses 1.21.6 API
-* **1.21–1.21.5** → Uses 1.21 API
-
-The plugin detects the server version and selects the correct API automatically. No manual configuration required.
-
 ### Installation Steps
 
 1. Download the latest [SignWarpX.jar](https://modrinth.com/plugin/signwarpx/versions)
