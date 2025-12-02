@@ -232,11 +232,11 @@ warp-groups:
 | `/signwarp reload` | `/wp reload` | Reload configuration | `signwarp.reload` |
 | `/signwarp gui` | `/wp gui` | Open management interface | `signwarp.admin` |
 | `/signwarp set <public\|private> <warp>` | `/wp set` | Set warp visibility | `signwarp.private.set` |
-| `/signwarp invite <player> <warp>` | `/wp invite` | Invite player to use private warp | `signwarp.invite` |
-| `/signwarp uninvite <player> <warp>` | `/wp uninvite` | Remove player invitation | `signwarp.invite` |
-| `/signwarp list-invites <warp>` | `/wp list-invites` | View invite list | `signwarp.invite.list` |
+| `/signwarp invite add <player> <warp>` | `/wp invite add` | Invite player to use private warp | `signwarp.invite` |
+| `/signwarp invite remove <player> <warp>` | `/wp invite remove` | Remove player invitation | `signwarp.invite` |
+| `/signwarp invite list <warp>` | `/wp invite list` | View invite list | `signwarp.invite.list` |
 | `/signwarp tp <warp>` | `/wp tp` | Direct teleport (admin) | `signwarp.tp` |
-| `/signwarp list-own [player]` | `/wp list-own` | View own or (OP) others' warps | `signwarp.admin` |
+| `/signwarp owned [player]` | `/wp owned` | View own or (OP) others' warps | `signwarp.admin` |
 | `/signwarp history [warp\|player]` | `/wp history` | View teleport history | `signwarp.use` |
 | `/signwarp navigate start <warp>` | `/wp navigate start` | Start navigation to warp (compass points to target) | `signwarp.use` |
 | `/signwarp navigate stop` | `/wp navigate stop` | Stop current navigation | `signwarp.use` |
