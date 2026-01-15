@@ -1,4 +1,4 @@
-# SignWarpX [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21+-green.svg)](https://www.minecraft.net/) [![Paper](https://img.shields.io/badge/Paper-Required-blue.svg)](https://papermc.io/)
+# SignWarpX [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.8+-green.svg)](https://www.minecraft.net/) [![Paper](https://img.shields.io/badge/Paper-Required-blue.svg)](https://papermc.io/)
 
 ## Introduction
 
@@ -35,7 +35,7 @@ SignWarpX is a teleportation plugin designed for Minecraft Paper servers. It all
 ## Installation
 
 ### Requirements
-- **Minecraft Version**: 1.21 or higher
+- **Minecraft Version**: 1.21.8 or higher
 - **Server Software**: Paper (recommended) or other Paper-based forks
 - **Java Version**: Java 21 or higher
 
