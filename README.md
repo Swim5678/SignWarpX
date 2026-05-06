@@ -36,7 +36,7 @@ Perfect for city networks or private adventure hubs.
 
 * **Minecraft**: 1.21.8+
 * **Server**: Paper or Paper-based fork
-* **Java**: 21+
+* **Java**: 25
 
 ## Installation
 
